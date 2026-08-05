@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { dayLabel } from '../../core/calendar';
 import { FamilyConfig, ParentIndex, RotationType, dateKey, lastMonday, parseKey } from '../../core/custody';
+import { HolidayZone } from '../../core/holidays';
 import { AuthService } from '../../core/auth.service';
 import { FamilyStore } from '../../core/family.store';
 import { ToastService } from '../../core/toast.service';
@@ -25,6 +26,10 @@ export class SettingsPage {
   protected rotationType: RotationType;
   protected anchorInput: string;
   protected startParent: ParentIndex;
+  protected holidayZone: HolidayZone | '';
+  protected holidaySplit: boolean;
+  protected firstHalfEvenYears: ParentIndex;
+  protected notifyByEmail: boolean;
   protected readonly saving = signal(false);
 
   protected readonly inviteLink = computed(() => {
@@ -40,6 +45,10 @@ export class SettingsPage {
     this.rotationType = config?.rotation.type ?? 'week';
     this.anchorInput = config?.rotation.anchor ?? dateKey(lastMonday(new Date()));
     this.startParent = config?.rotation.start ?? 0;
+    this.holidayZone = config?.holidays?.zone ?? '';
+    this.holidaySplit = config?.holidays?.split ?? false;
+    this.firstHalfEvenYears = config?.holidays?.firstHalfEvenYears ?? 0;
+    this.notifyByEmail = config?.notifyByEmail ?? true;
   }
 
   protected anchorMondayLabel(): string {
@@ -78,6 +87,16 @@ export class SettingsPage {
         anchor: this.normalizedAnchor(),
         start: this.startParent,
       },
+      ...(this.holidayZone
+        ? {
+            holidays: {
+              zone: this.holidayZone,
+              split: this.holidaySplit,
+              firstHalfEvenYears: this.firstHalfEvenYears,
+            },
+          }
+        : {}),
+      notifyByEmail: this.notifyByEmail,
     };
     this.saving.set(true);
     try {

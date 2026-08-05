@@ -29,6 +29,7 @@
             [class.out]="!cell.inMonth"
             [class.today]="cell.isToday"
             [class.handover]="cell.handover"
+            [class.hol]="cell.holiday"
             [class.selected]="selectedDay() === cell.key"
             (click)="select(cell.key)"
           >
@@ -48,6 +49,10 @@
         }
       }
     </div>
+
+    @if (holidayZone(); as zone) {
+      <p class="holiday-legend">Jours hachurés : vacances scolaires (zone {{ zone }})</p>
+    }
 
     @if (selectedDay(); as day) {
       <app-day-panel [day]="day" (closed)="selectedDay.set(null)" />

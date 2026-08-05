@@ -47,6 +47,12 @@
   border-radius: 50%;
 }
 
+.holiday-tag {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
 .block {
   border-top: 1px solid var(--line);
   padding: 0.75rem 0;

@@ -139,6 +139,22 @@
   opacity: 0.45;
 }
 
+/* Vacances scolaires : hachures discrètes par-dessus la couleur du parent. */
+.day.hol {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 5px,
+    rgb(0 0 0 / 0.07) 5px 7px
+  );
+}
+
+.holiday-legend {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
 .num {
   line-height: 1;
 }

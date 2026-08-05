@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { dayLabel } from '../../core/calendar';
 import { FamilyConfig, ParentIndex, RotationType, dateKey, lastMonday, parseKey } from '../../core/custody';
+import { HolidayZone } from '../../core/holidays';
 import { FamilyStore } from '../../core/family.store';
 import { ToastService } from '../../core/toast.service';
 
@@ -23,6 +24,9 @@ export class SetupPage {
   protected rotationType: RotationType = 'week';
   protected anchorInput = dateKey(lastMonday(new Date()));
   protected startParent: ParentIndex = 0;
+  protected holidayZone: HolidayZone | '' = '';
+  protected holidaySplit = false;
+  protected firstHalfEvenYears: ParentIndex = 0;
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
@@ -74,6 +78,16 @@ export class SetupPage {
         anchor: this.normalizedAnchor(),
         start: this.startParent,
       },
+      ...(this.holidayZone
+        ? {
+            holidays: {
+              zone: this.holidayZone,
+              split: this.holidaySplit,
+              firstHalfEvenYears: this.firstHalfEvenYears,
+            },
+          }
+        : {}),
+      notifyByEmail: true,
     };
     this.saving.set(true);
     this.errorMessage.set(null);

@@ -4,6 +4,15 @@
     <button type="button" class="close" (click)="closed.emit()" aria-label="Fermer">✕</button>
   </header>
 
+  @if (holidayName(); as holiday) {
+    <p class="holiday-tag">
+      🏖 {{ holiday }}
+      @if (fromHolidaySplit()) {
+        <span>— partage vacances appliqué</span>
+      }
+    </p>
+  }
+
   <!-- Gardien + échange -->
   <div class="block custody">
     <span class="chip c{{ custodian() }}">{{ parentName(custodian()) }}</span>

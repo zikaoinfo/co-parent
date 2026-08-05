@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { WEEKDAY_INITIALS, monthGrid, monthLabel } from '../../core/calendar';
 import { Custodian, custodianFor, dateKey } from '../../core/custody';
+import { holidayFor } from '../../core/holidays';
 import { FamilyStore } from '../../core/family.store';
 import { DayPanel } from './day-panel';
 
@@ -15,6 +16,7 @@ interface DayCell {
   hasEvents: boolean;
   hasNote: boolean;
   handover: boolean; // gardien différent du jour précédent -> trait de passation
+  holiday: boolean; // vacances scolaires (zone de la famille)
 }
 
 @Component({
@@ -42,6 +44,7 @@ export class CalendarPage {
     const eventsByDay = this.store.eventsByDay();
     const notes = this.store.notes();
     const month = this.viewMonth();
+    const zone = config.holidays?.zone;
     let previous: Custodian | null = null;
     return monthGrid(this.viewYear(), month).map((week) =>
       week.map((key) => {
@@ -56,12 +59,16 @@ export class CalendarPage {
           hasEvents: (eventsByDay[key]?.length ?? 0) > 0,
           hasNote: key in notes,
           handover: previous !== null && previous !== custodian,
+          holiday: zone ? holidayFor(key, zone) !== null : false,
         };
         previous = custodian;
         return cell;
       }),
     );
   });
+
+  /** Zone de vacances configurée (pour la légende). */
+  protected readonly holidayZone = computed(() => this.store.config()?.holidays?.zone ?? null);
 
   protected previousMonth(): void {
     const m = this.viewMonth() - 1;

@@ -71,6 +71,35 @@
         </div>
       }
 
+      <div class="field">
+        <label for="zone">Vacances scolaires</label>
+        <select id="zone" name="zone" [(ngModel)]="holidayZone">
+          <option value="">Ne pas afficher</option>
+          <option value="A">Zone A (Besançon, Bordeaux, Clermont, Dijon, Grenoble, Limoges, Lyon, Poitiers)</option>
+          <option value="B">Zone B (Aix-Marseille, Amiens, Lille, Nancy-Metz, Nantes, Nice, Normandie, Orléans-Tours, Reims, Rennes, Strasbourg)</option>
+          <option value="C">Zone C (Créteil, Montpellier, Paris, Toulouse, Versailles)</option>
+        </select>
+      </div>
+
+      @if (holidayZone) {
+        <div class="field">
+          <label class="check">
+            <input type="checkbox" name="holidaySplit" [(ngModel)]="holidaySplit" />
+            Partager les vacances moitié-moitié (prime sur le rythme habituel)
+          </label>
+        </div>
+        @if (holidaySplit) {
+          <div class="field">
+            <label for="firstHalf">Qui a la première moitié les années paires ?</label>
+            <select id="firstHalf" name="firstHalf" [(ngModel)]="firstHalfEvenYears">
+              <option [ngValue]="0">{{ parent0 || 'Vous' }}</option>
+              <option [ngValue]="1">{{ parent1 || "L'autre parent" }}</option>
+            </select>
+            <p class="hint">L'attribution s'inverse automatiquement les années impaires.</p>
+          </div>
+        }
+      }
+
       <button class="primary" type="submit" [disabled]="saving() || !store.online()">
         {{ saving() ? 'Création…' : 'Créer la famille' }}
       </button>

@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { dayLabel, timeLabel } from '../../core/calendar';
-import { Custodian, ParentIndex, custodianFor } from '../../core/custody';
+import { Custodian, ParentIndex, custodianFor, holidayCustodian } from '../../core/custody';
+import { holidayFor } from '../../core/holidays';
 import { EventRow, FamilyStore } from '../../core/family.store';
 import { ToastService } from '../../core/toast.service';
 
@@ -35,11 +36,27 @@ export class DayPanel {
     return custodianFor(this.day(), config, this.store.overrideIndex());
   });
 
-  /** Gardien donné par la seule rotation (sans échange). */
+  /** Gardien donné par la rotation/vacances (sans échange ponctuel). */
   protected readonly rotationCustodian = computed<Custodian>(() => {
     const config = this.store.config();
     if (!config) return -1;
     return custodianFor(this.day(), config, {});
+  });
+
+  /** Nom de la période de vacances scolaires couvrant ce jour, sinon null. */
+  protected readonly holidayName = computed<string | null>(() => {
+    const holidays = this.store.config()?.holidays;
+    if (!holidays) return null;
+    return holidayFor(this.day(), holidays.zone)?.name ?? null;
+  });
+
+  /** Le gardien du jour vient-il du partage vacances (et non de la rotation) ? */
+  protected readonly fromHolidaySplit = computed<boolean>(() => {
+    const config = this.store.config();
+    if (!config) return false;
+    return (
+      !(this.day() in this.store.overrideIndex()) && holidayCustodian(this.day(), config) !== null
+    );
   });
 
   protected readonly events = computed<EventRow[]>(
