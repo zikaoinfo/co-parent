@@ -1,6 +1,7 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { AuthService } from './auth.service';
+import { dayLabel } from './calendar';
 import { CustodyOverrides, FamilyConfig, ParentIndex } from './custody';
 import { supabase } from './supabase.client';
 
@@ -303,6 +304,9 @@ export class FamilyStore {
         .eq('day', day);
       if (error) throw error;
       this.overrides.update(({ [day]: _, ...rest }) => rest);
+      this.notify(
+        `${this.myName()} a annulé l'échange du ${dayLabel(day)} (retour au rythme habituel).`,
+      );
       return;
     }
     const row = {
@@ -318,6 +322,9 @@ export class FamilyStore {
       .single();
     if (error) throw error;
     this.overrides.update((current) => ({ ...current, [day]: data as OverrideRow }));
+    this.notify(
+      `${this.myName()} a passé le ${dayLabel(day)} chez ${this.parentName(parentIndex)}.`,
+    );
   }
 
   async addEvent(day: string, title: string, time: string | null): Promise<void> {
@@ -329,12 +336,19 @@ export class FamilyStore {
       .single();
     if (error) throw error;
     this.events.update((current) => [...current.filter((e) => e.id !== data.id), data as EventRow]);
+    this.notify(
+      `${this.myName()} a ajouté « ${title} » le ${dayLabel(day)}${time ? ` à ${time}` : ''}.`,
+    );
   }
 
   async deleteEvent(id: number): Promise<void> {
+    const removed = this.events().find((e) => e.id === id);
     const { error } = await supabase.from('events').delete().eq('id', id);
     if (error) throw error;
     this.events.update((current) => current.filter((e) => e.id !== id));
+    if (removed) {
+      this.notify(`${this.myName()} a supprimé « ${removed.title} » du ${dayLabel(removed.day)}.`);
+    }
   }
 
   /** Enregistre la note du jour ; une note vide la supprime. */
@@ -345,6 +359,7 @@ export class FamilyStore {
       const { error } = await supabase.from('day_notes').delete().eq('family_id', fid).eq('day', day);
       if (error) throw error;
       this.notes.update(({ [day]: _, ...rest }) => rest);
+      this.notify(`${this.myName()} a supprimé la note du ${dayLabel(day)}.`);
       return;
     }
     const row = { family_id: fid, day, note: trimmed, updated_by: this.auth.userId() };
@@ -355,6 +370,7 @@ export class FamilyStore {
       .single();
     if (error) throw error;
     this.notes.update((current) => ({ ...current, [day]: data as NoteRow }));
+    this.notify(`${this.myName()} a mis à jour la note du ${dayLabel(day)} : « ${trimmed} »`);
   }
 
   async updateConfig(config: FamilyConfig): Promise<void> {
@@ -362,6 +378,7 @@ export class FamilyStore {
     const { error } = await supabase.from('families').update({ config }).eq('id', fid);
     if (error) throw error;
     this.config.set(config);
+    this.notify(`${this.myName()} a modifié les réglages de la famille.`);
   }
 
   async signOut(): Promise<void> {
@@ -371,6 +388,30 @@ export class FamilyStore {
   }
 
   // -------------------------------------------------------------------------
+
+  /**
+   * E-mail à l'autre parent via l'Edge Function notify-change, en
+   * fire-and-forget : un échec d'envoi ne doit jamais bloquer la modification
+   * (le realtime synchronise déjà l'app de toute façon).
+   */
+  private notify(message: string): void {
+    const config = this.config();
+    const fid = this.familyId();
+    if (!fid || config?.notifyByEmail === false) return;
+    void supabase.functions
+      .invoke('notify-change', { body: { family_id: fid, message } })
+      .catch(() => {});
+  }
+
+  private myName(): string {
+    const config = this.config();
+    const index = this.myIndex();
+    return config && index !== null ? config.parents[index] : 'Un parent';
+  }
+
+  private parentName(index: ParentIndex): string {
+    return this.config()?.parents[index] ?? `Parent ${index + 1}`;
+  }
 
   private requireFamily(): string {
     const fid = this.familyId();

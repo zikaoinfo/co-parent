@@ -56,6 +56,43 @@ ajoutée : `@supabase/supabase-js`.
    tout visiteur de l'URL publique ; les deux comptes existants continuent
    de se connecter normalement.
 
+## E-mails : magic links + notifications de modification
+
+Deux usages, un seul SMTP. Recommandation : une boîte dédiée (compte Google
+à part avec mot de passe d'application, ou une adresse de votre domaine).
+
+1. **Magic links** (connexion) : Dashboard → Authentication → Emails →
+   **SMTP Settings** → Enable custom SMTP (host/port 465/utilisateur/mot de
+   passe de la boîte, sender `Notre Garde <adresse>`), puis Authentication →
+   **Rate Limits** : monter la limite d'envoi (ex. 30/h). Sans SMTP custom,
+   l'e-mail intégré de Supabase est limité à ~2 envois/heure.
+2. **Notification à l'autre parent à chaque modification** (échange de jour,
+   événement, note, réglages) : l'app appelle l'Edge Function
+   `notify-change`, qui envoie l'e-mail via le même SMTP. Mise en service :
+
+   ```bash
+   npx supabase secrets set \
+     SMTP_HOST=smtp.gmail.com SMTP_PORT=465 \
+     SMTP_USER=adresse@gmail.com SMTP_PASS='mot-de-passe-application' \
+     SMTP_SENDER='Notre Garde <adresse@gmail.com>'
+   npx supabase functions deploy notify-change
+   ```
+
+   Le réglage « Prévenir l'autre parent par e-mail » (écran Réglages)
+   active/désactive ces envois pour la famille. L'envoi est en
+   fire-and-forget : un échec SMTP ne bloque jamais la modification.
+
+## Vacances scolaires
+
+Les dates officielles (métropole, zones A/B/C) sont embarquées dans
+`src/app/core/holidays.ts` — années 2025-2026 et 2026-2027 (arrêté JO
+d'octobre 2025). **À compléter chaque année** depuis
+[education.gouv.fr](https://www.education.gouv.fr/calendrier-scolaire) en
+ajoutant les périodes au tableau `SCHOOL_HOLIDAYS_FR`. Le partage
+moitié-moitié (option des réglages) attribue la première moitié de chaque
+période au parent configuré les années paires, à l'autre les années
+impaires ; les échanges ponctuels restent prioritaires.
+
 ## Développement
 
 ```bash
