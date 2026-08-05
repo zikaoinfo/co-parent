@@ -35,7 +35,17 @@ ajoutée : `@supabase/supabase-js`.
    par design — la sécurité vient des policies RLS. Ne jamais mettre la clé
    `service_role` dans le code.
 
-### 2. Onboarding des parents
+### 2. GitHub Pages
+
+1. Settings du repo → **Pages** → Source : **GitHub Actions**.
+2. Chaque push sur `main` déclenche `.github/workflows/deploy.yml`
+   (tests, build avec `--base-href=/co-parent/`, publication).
+   L'app est servie sur `https://<utilisateur>.github.io/co-parent/` —
+   c'est cette URL qu'il faut mettre en Site URL côté Supabase.
+3. L'app est installable (PWA) depuis Safari iOS (« Sur l'écran
+   d'accueil ») et Chrome Android ; la lecture fonctionne hors ligne.
+
+### 3. Onboarding des parents
 
 1. Parent 1 : ouvrir l'app, se connecter par magic link, remplir le wizard —
    la famille est créée et un **lien d'invitation** s'affiche.
