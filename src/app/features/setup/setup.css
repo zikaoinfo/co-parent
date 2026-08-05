@@ -1,0 +1,40 @@
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.child-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.child-row button {
+  flex: 0 0 44px;
+  padding: 0;
+}
+
+form button[type='submit'] {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.invite p {
+  margin-bottom: 0.75rem;
+}
+
+.invite-link {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+  background: var(--bg);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  user-select: all;
+}
+
+.invite button {
+  width: 100%;
+  margin-top: 0.5rem;
+}

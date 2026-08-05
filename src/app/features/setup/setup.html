@@ -1,0 +1,85 @@
+<main class="page">
+  @if (store.familyId() && !store.inviteToken()) {
+    <!-- Déjà membre d'une famille (arrivé ici par erreur) -->
+    <div class="card">
+      <p>Votre famille est déjà configurée.</p>
+      <a routerLink="/">Ouvrir le calendrier</a>
+    </div>
+  } @else if (store.inviteToken()) {
+    <!-- Famille créée : afficher le lien d'invitation du parent 2 -->
+    <h1>Invitez l'autre parent</h1>
+    <div class="card invite">
+      <p>
+        Envoyez ce lien à <strong>{{ store.config()?.parents?.[1] }}</strong> (par SMS,
+        e-mail…). Il est valable 7 jours et ne peut servir qu'une fois.
+      </p>
+      <p class="invite-link">{{ inviteLink() }}</p>
+      <button class="primary" type="button" (click)="copyInviteLink()">Copier le lien</button>
+      <button type="button" (click)="goToCalendar()">Continuer vers le calendrier</button>
+    </div>
+  } @else {
+    <h1>Configurer la famille</h1>
+    <form class="card" (ngSubmit)="create()">
+      <div class="field">
+        <label for="parent0">Votre prénom</label>
+        <input id="parent0" name="parent0" [(ngModel)]="parent0" required placeholder="Alice" />
+      </div>
+      <div class="field">
+        <label for="parent1">Prénom de l'autre parent</label>
+        <input id="parent1" name="parent1" [(ngModel)]="parent1" required placeholder="Bruno" />
+      </div>
+
+      <div class="field">
+        <label>Enfants</label>
+        @for (child of children(); track $index) {
+          <div class="child-row">
+            <input
+              [name]="'child' + $index"
+              [ngModel]="child"
+              (ngModelChange)="updateChild($index, $event)"
+              placeholder="Prénom de l'enfant"
+            />
+            @if (children().length > 1) {
+              <button type="button" class="danger" (click)="removeChild($index)" aria-label="Retirer cet enfant">✕</button>
+            }
+          </div>
+        }
+        <button type="button" (click)="addChild()">+ Ajouter un enfant</button>
+      </div>
+
+      <div class="field">
+        <label for="rotation">Rythme de garde</label>
+        <select id="rotation" name="rotation" [(ngModel)]="rotationType">
+          <option value="week">Semaines alternées</option>
+          <option value="223">2-2-3 (cycle de 14 jours)</option>
+          <option value="manual">Manuel (jour par jour)</option>
+        </select>
+      </div>
+
+      @if (rotationType !== 'manual') {
+        <div class="field">
+          <label for="anchor">Semaine de référence</label>
+          <input id="anchor" type="date" name="anchor" [(ngModel)]="anchorInput" />
+          <p class="hint">Semaine du {{ anchorMondayLabel() }}.</p>
+        </div>
+        <div class="field">
+          <label for="start">Qui a la garde cette semaine-là ?</label>
+          <select id="start" name="start" [(ngModel)]="startParent">
+            <option [ngValue]="0">{{ parent0 || 'Vous' }}</option>
+            <option [ngValue]="1">{{ parent1 || "L'autre parent" }}</option>
+          </select>
+        </div>
+      }
+
+      <button class="primary" type="submit" [disabled]="saving() || !store.online()">
+        {{ saving() ? 'Création…' : 'Créer la famille' }}
+      </button>
+      @if (!store.online()) {
+        <p class="hint">Hors ligne : connexion requise pour créer la famille.</p>
+      }
+      @if (errorMessage(); as message) {
+        <p class="error">{{ message }}</p>
+      }
+    </form>
+  }
+</main>

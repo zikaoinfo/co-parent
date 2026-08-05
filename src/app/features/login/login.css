@@ -1,0 +1,22 @@
+.login {
+  padding-top: 15vh;
+  text-align: center;
+}
+
+.login h1 {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.login .card {
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.login button {
+  width: 100%;
+}
+
+.login .hint {
+  margin-top: 0.75rem;
+}

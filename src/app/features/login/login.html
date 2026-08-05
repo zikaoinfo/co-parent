@@ -1,0 +1,37 @@
+<main class="page login">
+  <h1>Notre Garde</h1>
+  <p class="hint">Le calendrier de garde partagé des deux parents.</p>
+
+  @if (sent()) {
+    <div class="card">
+      <h2>Lien envoyé 📬</h2>
+      <p>
+        Ouvrez l'e-mail reçu à <strong>{{ email }}</strong> et cliquez sur le lien de connexion.
+        Vous pouvez fermer cet onglet.
+      </p>
+    </div>
+  } @else {
+    <form class="card" (ngSubmit)="send()">
+      <div class="field">
+        <label for="email">Votre adresse e-mail</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          autocomplete="email"
+          inputmode="email"
+          placeholder="prenom@exemple.fr"
+        />
+      </div>
+      <button class="primary" type="submit" [disabled]="sending()">
+        {{ sending() ? 'Envoi…' : 'Recevoir mon lien de connexion' }}
+      </button>
+      @if (errorMessage(); as message) {
+        <p class="error">{{ message }}</p>
+      }
+      <p class="hint">Pas de mot de passe : un lien de connexion vous est envoyé par e-mail.</p>
+    </form>
+  }
+</main>

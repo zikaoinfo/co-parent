@@ -1,0 +1,49 @@
+<main class="page join">
+  <h1>Rejoindre la famille</h1>
+
+  @if (!ready()) {
+    <p class="hint">Chargement…</p>
+  } @else if (joining()) {
+    <p class="hint">Adhésion en cours…</p>
+  } @else if (errorMessage(); as message) {
+    <div class="card">
+      <p class="error">{{ message }}</p>
+      <p class="hint">
+        Demandez à l'autre parent de générer un nouveau lien depuis ses réglages, puis rouvrez-le.
+      </p>
+    </div>
+  } @else if (!auth.session()) {
+    @if (sent()) {
+      <div class="card">
+        <h2>Lien envoyé 📬</h2>
+        <p>
+          Ouvrez l'e-mail reçu à <strong>{{ email }}</strong> : le lien de connexion vous ramènera
+          ici pour finaliser l'adhésion.
+        </p>
+      </div>
+    } @else {
+      <form class="card" (ngSubmit)="sendLink()">
+        <p>
+          Vous avez été invité·e à partager le calendrier de garde. Indiquez votre e-mail pour
+          créer votre accès.
+        </p>
+        <div class="field">
+          <label for="email">Votre adresse e-mail</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            required
+            autocomplete="email"
+            inputmode="email"
+            placeholder="prenom@exemple.fr"
+          />
+        </div>
+        <button class="primary" type="submit" [disabled]="sending()">
+          {{ sending() ? 'Envoi…' : 'Recevoir mon lien de connexion' }}
+        </button>
+      </form>
+    }
+  }
+</main>

@@ -1,0 +1,17 @@
+.join {
+  padding-top: 10vh;
+}
+
+.join h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.join form p:first-child {
+  margin-bottom: 1rem;
+}
+
+.join button {
+  width: 100%;
+}

@@ -1,1 +1,131 @@
-/* You can add global styles to this file, and also import other style files */
+/* Notre Garde — styles globaux. Mobile-first (référence 390 px), aucune
+   dépendance CSS. Couleurs des parents en variables, réutilisées partout. */
+
+:root {
+  --parent0: #4f7cf0; /* parent 1 : bleu */
+  --parent1: #ef8354; /* parent 2 : orange */
+  --parent0-soft: #e3ebfd;
+  --parent1-soft: #fdeade;
+  --ink: #22242a;
+  --muted: #6b7280;
+  --bg: #f7f7f9;
+  --card: #ffffff;
+  --line: #e4e5ea;
+  --danger: #d64545;
+  --radius: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.45;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  border-radius: var(--radius);
+  cursor: pointer;
+  min-height: 44px; /* cible tactile */
+  padding: 0.55rem 1rem;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--parent0);
+  border-color: var(--parent0);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.danger {
+  color: var(--danger);
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+}
+
+textarea {
+  resize: vertical;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
