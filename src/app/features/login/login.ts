@@ -33,8 +33,9 @@ export class LoginPage {
     try {
       await this.auth.sendMagicLink(email);
       this.sent.set(true);
-    } catch {
-      this.errorMessage.set("L'envoi a échoué. Vérifiez l'adresse et réessayez.");
+    } catch (error) {
+      const detail = error instanceof Error ? ` (${error.message})` : '';
+      this.errorMessage.set(`L'envoi a échoué${detail}. Vérifiez l'adresse et réessayez.`);
     } finally {
       this.sending.set(false);
     }
