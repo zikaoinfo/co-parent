@@ -1,0 +1,88 @@
+<section class="sheet" role="dialog" [attr.aria-label]="label()">
+  <header class="sheet-head">
+    <h2>{{ label() }}</h2>
+    <button type="button" class="close" (click)="closed.emit()" aria-label="Fermer">✕</button>
+  </header>
+
+  <!-- Gardien + échange -->
+  <div class="block custody">
+    <span class="chip c{{ custodian() }}">{{ parentName(custodian()) }}</span>
+    @if (override(); as ov) {
+      <span class="hint">⇄ jour échangé</span>
+    }
+    @if (custodian() !== 1) {
+      <button type="button" [disabled]="busy() || !store.online()" (click)="assignTo(1)">
+        Passer ce jour chez {{ parentName(1) }}
+      </button>
+    }
+    @if (custodian() !== 0) {
+      <button type="button" [disabled]="busy() || !store.online()" (click)="assignTo(0)">
+        Passer ce jour chez {{ parentName(0) }}
+      </button>
+    }
+    @if (lastEdit(override()); as edit) {
+      <p class="hint">{{ edit }}</p>
+    }
+  </div>
+
+  <!-- Événements -->
+  <div class="block">
+    <h3>Événements</h3>
+    @for (event of events(); track event.id) {
+      <div class="event">
+        <span class="author-dot p{{ authorIndex(event.created_by) }}"></span>
+        @if (event.time) {
+          <span class="time">{{ event.time }}</span>
+        }
+        <span class="title">{{ event.title }}</span>
+        <button
+          type="button"
+          class="danger delete"
+          [disabled]="!store.online()"
+          (click)="deleteEvent(event.id)"
+          aria-label="Supprimer l'événement"
+        >
+          ✕
+        </button>
+      </div>
+    } @empty {
+      <p class="hint">Aucun événement ce jour.</p>
+    }
+    <form class="event-form" (ngSubmit)="addEvent()">
+      <input type="time" name="eventTime" [(ngModel)]="eventTime" aria-label="Heure" />
+      <input
+        name="eventTitle"
+        [(ngModel)]="eventTitle"
+        placeholder="Médecin, école, judo…"
+        maxlength="200"
+        aria-label="Titre de l'événement"
+      />
+      <button type="submit" class="primary" [disabled]="busy() || !store.online()">+</button>
+    </form>
+  </div>
+
+  <!-- Note de passation -->
+  <div class="block">
+    <h3>Note de passation</h3>
+    <textarea
+      name="note"
+      rows="3"
+      maxlength="2000"
+      [ngModel]="noteDraft()"
+      (ngModelChange)="noteDraft.set($event)"
+      (blur)="saveNote()"
+      [disabled]="!store.online()"
+      placeholder="Doudou dans le sac, sirop à 18 h…"
+    ></textarea>
+    <div class="note-foot">
+      @if (lastEdit(note()); as edit) {
+        <p class="hint">{{ edit }}</p>
+      }
+      <button type="button" [disabled]="!store.online()" (click)="saveNote()">Enregistrer</button>
+    </div>
+  </div>
+
+  @if (!store.online()) {
+    <p class="hint offline">Hors ligne : les modifications sont désactivées.</p>
+  }
+</section>

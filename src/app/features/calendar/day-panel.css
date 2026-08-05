@@ -1,0 +1,155 @@
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 75dvh;
+  overflow-y: auto;
+  background: var(--card);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 24px rgb(0 0 0 / 0.18);
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 50;
+  animation: sheet-in 0.2s ease-out;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(2rem);
+    opacity: 0;
+  }
+}
+
+@media (min-width: 700px) {
+  .sheet {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.sheet-head h2 {
+  font-size: 1.1rem;
+  text-transform: capitalize;
+}
+
+.close {
+  flex: 0 0 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.block {
+  border-top: 1px solid var(--line);
+  padding: 0.75rem 0;
+}
+
+.block h3 {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.custody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.custody button {
+  width: 100%;
+}
+
+.chip {
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--muted);
+}
+
+.chip.c0 {
+  background: var(--parent0);
+}
+
+.chip.c1 {
+  background: var(--parent1);
+}
+
+.event {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+}
+
+.author-dot {
+  flex: 0 0 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.author-dot.p0 {
+  background: var(--parent0);
+}
+
+.author-dot.p1 {
+  background: var(--parent1);
+}
+
+.event .time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.event .title {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.event .delete {
+  flex: 0 0 36px;
+  min-height: 36px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.event-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.event-form input[type='time'] {
+  flex: 0 0 6.5rem;
+}
+
+.event-form button {
+  flex: 0 0 52px;
+  font-size: 1.2rem;
+}
+
+.note-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.offline {
+  text-align: center;
+  padding-top: 0.5rem;
+}

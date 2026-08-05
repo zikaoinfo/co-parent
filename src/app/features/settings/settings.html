@@ -1,0 +1,89 @@
+<main class="page">
+  <header class="head">
+    <a routerLink="/" class="back" aria-label="Retour au calendrier">‹</a>
+    <h1>Réglages</h1>
+  </header>
+
+  <form class="card" (ngSubmit)="save()">
+    <div class="field">
+      <label for="parent0">Parent 1</label>
+      <input id="parent0" name="parent0" [(ngModel)]="parent0" required />
+    </div>
+    <div class="field">
+      <label for="parent1">Parent 2</label>
+      <input id="parent1" name="parent1" [(ngModel)]="parent1" required />
+    </div>
+
+    <div class="field">
+      <label>Enfants</label>
+      @for (child of children(); track $index) {
+        <div class="child-row">
+          <input
+            [name]="'child' + $index"
+            [ngModel]="child"
+            (ngModelChange)="updateChild($index, $event)"
+            placeholder="Prénom de l'enfant"
+          />
+          @if (children().length > 1) {
+            <button type="button" class="danger" (click)="removeChild($index)" aria-label="Retirer cet enfant">✕</button>
+          }
+        </div>
+      }
+      <button type="button" (click)="addChild()">+ Ajouter un enfant</button>
+    </div>
+
+    <div class="field">
+      <label for="rotation">Rythme de garde</label>
+      <select id="rotation" name="rotation" [(ngModel)]="rotationType">
+        <option value="week">Semaines alternées</option>
+        <option value="223">2-2-3 (cycle de 14 jours)</option>
+        <option value="manual">Manuel (jour par jour)</option>
+      </select>
+    </div>
+
+    @if (rotationType !== 'manual') {
+      <div class="field">
+        <label for="anchor">Semaine de référence</label>
+        <input id="anchor" type="date" name="anchor" [(ngModel)]="anchorInput" />
+        <p class="hint">Semaine du {{ anchorMondayLabel() }}.</p>
+      </div>
+      <div class="field">
+        <label for="start">Qui a la garde cette semaine-là ?</label>
+        <select id="start" name="start" [(ngModel)]="startParent">
+          <option [ngValue]="0">{{ parent0 || 'Parent 1' }}</option>
+          <option [ngValue]="1">{{ parent1 || 'Parent 2' }}</option>
+        </select>
+      </div>
+      <p class="hint">
+        ⚠ Modifier le rythme ou la semaine de référence recalcule tout le calendrier, passé
+        compris. Les jours échangés (⇄) sont conservés.
+      </p>
+    }
+
+    <button class="primary" type="submit" [disabled]="saving() || !store.online()">
+      {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+    </button>
+  </form>
+
+  @if (!store.complete()) {
+    <div class="card section">
+      <h2>Invitation de l'autre parent</h2>
+      <p class="hint">
+        L'autre parent n'a pas encore rejoint la famille. Générez un lien et envoyez-le-lui.
+      </p>
+      @if (inviteLink(); as link) {
+        <p class="invite-link">{{ link }}</p>
+        <button type="button" (click)="copyInviteLink()">Copier le lien</button>
+      }
+      <button type="button" [disabled]="!store.online()" (click)="regenerateInvitation()">
+        Générer un nouveau lien
+      </button>
+    </div>
+  }
+
+  <div class="card section">
+    <h2>Compte</h2>
+    <p class="hint">Connecté·e en tant que {{ auth.email() }}</p>
+    <button type="button" class="danger" (click)="signOut()">Se déconnecter</button>
+  </div>
+</main>

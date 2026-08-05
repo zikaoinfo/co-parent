@@ -1,0 +1,66 @@
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.head h1 {
+  font-size: 1.3rem;
+}
+
+.back {
+  flex: 0 0 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.child-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.child-row button {
+  flex: 0 0 44px;
+  padding: 0;
+}
+
+form button[type='submit'] {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.section {
+  margin-top: 1rem;
+}
+
+.section h2 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.section button {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.invite-link {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+  background: var(--bg);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  user-select: all;
+  margin-top: 0.5rem;
+}

@@ -195,6 +195,8 @@ begin
   perform tests.check((select count(*) from custody_overrides) = 1, 'u2 voit les overrides');
   perform tests.check((select parent_index from family_members
                        where user_id = auth.uid()) = 1, 'u2 occupe le siège parent 2');
+  perform tests.check((select count(*) from family_members) = 2,
+    'u2 voit les deux adhésions de sa famille');
 
   joined := join_family(tok);
   perform tests.check(joined = fid, 'join_family est idempotent pour un membre');

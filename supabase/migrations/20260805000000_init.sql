@@ -100,10 +100,11 @@ create policy families_select on families for select
 create policy families_update on families for update
   using (is_member(id)) with check (is_member(id));
 
--- family_members : chacun ne voit que ses propres adhésions. AUCUNE policy
--- d'écriture : insert uniquement via create_family / join_family.
+-- family_members : lecture des adhésions de ses propres familles (les deux
+-- parents, pour relier updated_by/created_by à un parent côté client).
+-- AUCUNE policy d'écriture : insert uniquement via create_family/join_family.
 create policy family_members_select on family_members for select
-  using (user_id = (select auth.uid()));
+  using (is_member(family_id));
 
 -- invitations : aucune policy — table manipulée uniquement en security definer.
 

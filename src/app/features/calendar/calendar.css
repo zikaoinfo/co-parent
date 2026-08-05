@@ -1,0 +1,167 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.topbar h1 {
+  flex: 1;
+  text-align: center;
+  font-size: 1.2rem;
+  text-transform: capitalize;
+}
+
+.topbar button,
+.settings-link {
+  flex: 0 0 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  padding: 0;
+  border-radius: 50%;
+  text-decoration: none;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.who {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.who.p0 {
+  background: var(--parent0);
+}
+
+.who.p1 {
+  background: var(--parent1);
+}
+
+.today-btn {
+  margin-left: auto;
+  min-height: 36px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.offline-banner {
+  background: #fff4e0;
+  border: 1px solid #f0ce93;
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding-bottom: 0.25rem;
+}
+
+.day {
+  position: relative;
+  aspect-ratio: 0.85;
+  min-height: 44px;
+  padding: 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.day.c0 {
+  background: var(--parent0-soft);
+  color: #2a4894;
+}
+
+.day.c1 {
+  background: var(--parent1-soft);
+  color: #91461f;
+}
+
+.day.c-1 {
+  background: var(--card);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.day.out {
+  opacity: 0.35;
+}
+
+.day.today {
+  outline: 2px solid var(--ink);
+  outline-offset: -1px;
+}
+
+.day.selected {
+  border-color: currentColor;
+  font-weight: 700;
+}
+
+/* Trait de passation : le gardien change par rapport au jour précédent. */
+.day.handover::before {
+  content: '';
+  position: absolute;
+  left: -2.5px;
+  top: 12%;
+  bottom: 12%;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+  opacity: 0.45;
+}
+
+.num {
+  line-height: 1;
+}
+
+.marks {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 0.9rem;
+  font-size: 0.7rem;
+}
+
+.swap {
+  font-weight: 700;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.note-mark {
+  opacity: 0.7;
+}

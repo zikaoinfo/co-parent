@@ -1,0 +1,58 @@
+<main class="page calendar">
+  <header class="topbar">
+    <button type="button" (click)="previousMonth()" aria-label="Mois précédent">‹</button>
+    <h1>{{ title() }}</h1>
+    <button type="button" (click)="nextMonth()" aria-label="Mois suivant">›</button>
+    <a routerLink="/settings" class="settings-link" aria-label="Réglages">⚙</a>
+  </header>
+
+  @if (store.config(); as config) {
+    <div class="legend">
+      <span class="who p0">{{ config.parents[0] }}</span>
+      <span class="who p1">{{ config.parents[1] }}</span>
+      <button type="button" class="today-btn" (click)="goToday()">Aujourd'hui</button>
+    </div>
+
+    @if (!store.online()) {
+      <p class="offline-banner">Hors ligne — lecture seule</p>
+    }
+
+    <div class="grid" role="grid">
+      @for (initial of weekdays; track $index) {
+        <div class="weekday">{{ initial }}</div>
+      }
+      @for (week of weeks(); track week[0].key) {
+        @for (cell of week; track cell.key) {
+          <button
+            type="button"
+            class="day c{{ cell.custodian }}"
+            [class.out]="!cell.inMonth"
+            [class.today]="cell.isToday"
+            [class.handover]="cell.handover"
+            [class.selected]="selectedDay() === cell.key"
+            (click)="select(cell.key)"
+          >
+            <span class="num">{{ cell.dayNumber }}</span>
+            <span class="marks">
+              @if (cell.swapped) {
+                <span class="swap" title="Jour échangé">⇄</span>
+              }
+              @if (cell.hasEvents) {
+                <span class="dot" title="Événements"></span>
+              }
+              @if (cell.hasNote) {
+                <span class="note-mark" title="Note">▪</span>
+              }
+            </span>
+          </button>
+        }
+      }
+    </div>
+
+    @if (selectedDay(); as day) {
+      <app-day-panel [day]="day" (closed)="selectedDay.set(null)" />
+    }
+  } @else {
+    <p class="hint">Chargement du calendrier…</p>
+  }
+</main>
