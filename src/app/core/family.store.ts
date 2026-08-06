@@ -390,14 +390,13 @@ export class FamilyStore {
   // -------------------------------------------------------------------------
 
   /**
-   * E-mail à l'autre parent via l'Edge Function notify-change, en
-   * fire-and-forget : un échec d'envoi ne doit jamais bloquer la modification
-   * (le realtime synchronise déjà l'app de toute façon).
+   * Notifie l'autre parent (push sur ses appareils abonnés + e-mail si le
+   * réglage de la famille l'active — l'Edge Function notify-change arbitre)
+   * en fire-and-forget : un échec d'envoi ne bloque jamais la modification.
    */
   private notify(message: string): void {
-    const config = this.config();
     const fid = this.familyId();
-    if (!fid || config?.notifyByEmail === false) return;
+    if (!fid) return;
     void supabase.functions
       .invoke('notify-change', { body: { family_id: fid, message } })
       .catch(() => {});

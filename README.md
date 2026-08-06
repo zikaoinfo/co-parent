@@ -82,6 +82,26 @@ Deux usages, un seul SMTP. Recommandation : une boîte dédiée (compte Google
    active/désactive ces envois pour la famille. L'envoi est en
    fire-and-forget : un échec SMTP ne bloque jamais la modification.
 
+3. **Notifications d'application (push)** : chaque parent peut activer les
+   notifications sur chacun de ses appareils (Réglages → « Notifications
+   sur cet appareil »). Sur iPhone/iPad : installer d'abord la PWA sur
+   l'écran d'accueil (iOS 16.4+). Côté serveur, la même Edge Function
+   pousse vers les appareils abonnés de l'autre parent ; il faut lui
+   fournir la clé privée VAPID (la clé publique est dans
+   `src/environments/environment.ts`) :
+
+   ```bash
+   npx supabase secrets set \
+     VAPID_KEYS_JWK='<paire de clés JWK, voir ci-dessous>' \
+     VAPID_SUBJECT='mailto:adresse@exemple.fr'
+   npx supabase functions deploy notify-change
+   ```
+
+   Pour régénérer une paire (invalide les abonnements existants) :
+   `node -e` avec `crypto.generateKeyPairSync('ec', {namedCurve:'prime256v1'})`
+   — exporter public/privé en JWK et reporter la clé publique
+   (`applicationServerKey` base64url) dans `environment.ts`.
+
 ## Vacances scolaires
 
 Les dates officielles (métropole, zones A/B/C) sont embarquées dans

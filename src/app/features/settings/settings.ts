@@ -6,6 +6,7 @@ import { FamilyConfig, ParentIndex, RotationType, dateKey, lastMonday, parseKey 
 import { HolidayZone } from '../../core/holidays';
 import { AuthService } from '../../core/auth.service';
 import { FamilyStore } from '../../core/family.store';
+import { PushService } from '../../core/push.service';
 import { ToastService } from '../../core/toast.service';
 
 @Component({
@@ -17,6 +18,7 @@ import { ToastService } from '../../core/toast.service';
 export class SettingsPage {
   protected readonly store = inject(FamilyStore);
   protected readonly auth = inject(AuthService);
+  protected readonly push = inject(PushService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
 
@@ -127,6 +129,24 @@ export class SettingsPage {
       this.toast.show('Lien copié !');
     } catch {
       this.toast.show('Copie impossible — sélectionnez le lien manuellement.');
+    }
+  }
+
+  protected async togglePush(): Promise<void> {
+    try {
+      if (this.push.enabled()) {
+        await this.push.disable();
+        this.toast.show('Notifications désactivées sur cet appareil');
+      } else {
+        await this.push.enable();
+        this.toast.show('Notifications activées sur cet appareil');
+      }
+    } catch {
+      this.toast.show(
+        this.push.denied()
+          ? 'Permission refusée — autorisez les notifications dans les réglages du navigateur.'
+          : "L'activation des notifications a échoué.",
+      );
     }
   }
 

@@ -118,6 +118,30 @@
   }
 
   <div class="card section">
+    <h2>Notifications sur cet appareil</h2>
+    @if (push.supported) {
+      <p class="hint">
+        Recevez une notification quand l'autre parent modifie le calendrier, comme avec une
+        application native.
+      </p>
+      <button type="button" [disabled]="!store.online()" (click)="togglePush()">
+        {{ push.enabled() ? 'Désactiver les notifications' : 'Activer les notifications' }}
+      </button>
+      @if (push.denied()) {
+        <p class="hint">
+          Permission refusée : réautorisez les notifications pour ce site dans les réglages du
+          navigateur.
+        </p>
+      }
+    } @else {
+      <p class="hint">
+        Non disponible ici. Sur iPhone/iPad, installez d'abord l'app (Partager → « Sur l'écran
+        d'accueil ») puis revenez dans ces réglages depuis l'app installée.
+      </p>
+    }
+  </div>
+
+  <div class="card section">
     <h2>Compte</h2>
     <p class="hint">Connecté·e en tant que {{ auth.email() }}</p>
     <button type="button" class="danger" (click)="signOut()">Se déconnecter</button>

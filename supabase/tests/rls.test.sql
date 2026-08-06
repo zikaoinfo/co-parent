@@ -287,6 +287,33 @@ end
 $$;
 
 -- ---------------------------------------------------------------------------
+-- push_subscriptions : chacun ne gère que ses propres appareils
+-- ---------------------------------------------------------------------------
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+begin
+  insert into push_subscriptions (endpoint, user_id, p256dh, auth)
+    values ('https://push.example/u1', auth.uid(), 'k', 'a');
+  perform tests.check((select count(*) from push_subscriptions) = 1,
+    'u1 enregistre et voit son abonnement push');
+end
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+do $$
+begin
+  perform tests.check((select count(*) from push_subscriptions) = 0,
+    'u2 ne voit pas les abonnements push de u1');
+end
+$$;
+
+select tests.expect_error(
+  $q$ insert into push_subscriptions (endpoint, user_id, p256dh, auth)
+      values ('https://push.example/spoof', '00000000-0000-0000-0000-000000000001', 'k', 'a') $q$,
+  'row-level security', 'impossible d''enregistrer un abonnement au nom d''un autre');
+
+-- ---------------------------------------------------------------------------
 -- Cloisonnement entre familles + anon + non authentifié
 -- ---------------------------------------------------------------------------
 

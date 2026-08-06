@@ -1,14 +1,17 @@
-// Edge Function : notifie l'autre parent par e-mail après une modification.
+// Edge Function : notifie l'autre parent après une modification.
+// - Push Web (notification d'application) vers ses appareils abonnés,
+// - E-mail si la famille l'a activé (réglage notifyByEmail).
 //
 // Appelée par le client (fire-and-forget) avec le JWT de l'utilisateur.
-// Vérifie l'appartenance à la famille (service role), retrouve l'e-mail de
-// l'autre parent et envoie via le SMTP configuré en secrets :
-//   npx supabase secrets set SMTP_HOST=... SMTP_PORT=465 SMTP_USER=... \
-//     SMTP_PASS=... SMTP_SENDER="Notre Garde <adresse@exemple.fr>"
+// Secrets attendus :
+//   SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_SENDER   (e-mail)
+//   VAPID_KEYS_JWK ({"publicKey":{...},"privateKey":{...}})       (push)
+//   VAPID_SUBJECT (mailto:adresse@exemple.fr)
 // Déploiement : npx supabase functions deploy notify-change
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
+import * as webpush from 'jsr:@negrel/webpush@0.3.0';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -61,39 +64,93 @@ Deno.serve(async (req) => {
     const other = members.find((m) => m.user_id !== user.id);
     if (!other) return json({ sent: false, reason: 'famille incomplète' });
 
-    const { data: otherUser, error: userError } = await admin.auth.admin.getUserById(
-      other.user_id,
-    );
-    const to = otherUser?.user?.email;
-    if (userError || !to) return json({ sent: false, reason: 'destinataire introuvable' });
+    const result = { push: 0, email: false };
 
+    // ——— Push Web vers les appareils abonnés de l'autre parent ———
+    const vapidJwk = Deno.env.get('VAPID_KEYS_JWK');
+    if (vapidJwk) {
+      const { data: subs } = await admin
+        .from('push_subscriptions')
+        .select('endpoint, p256dh, auth')
+        .eq('user_id', other.user_id);
+      if (subs?.length) {
+        const vapidKeys = await webpush.importVapidKeys(JSON.parse(vapidJwk), {
+          extractable: false,
+        });
+        const appServer = await webpush.ApplicationServer.new({
+          contactInformation: Deno.env.get('VAPID_SUBJECT') ?? 'mailto:admin@example.com',
+          vapidKeys,
+        });
+        // Payload au format attendu par le service worker Angular (ngsw).
+        const payload = JSON.stringify({
+          notification: {
+            title: 'Notre Garde',
+            body: message,
+            icon: 'icons/icon-192x192.png',
+            badge: 'icons/icon-72x72.png',
+            lang: 'fr',
+            tag: 'notre-garde',
+            data: {
+              onActionClick: { default: { operation: 'navigateLastFocusedOrOpen', url: '/' } },
+            },
+          },
+        });
+        for (const sub of subs) {
+          try {
+            const subscriber = appServer.subscribe({
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth },
+            });
+            await subscriber.pushTextMessage(payload, {});
+            result.push++;
+          } catch (error) {
+            // Abonnement expiré/révoqué : on le retire.
+            const status = (error as { response?: { status?: number } })?.response?.status;
+            if (status === 404 || status === 410) {
+              await admin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+            }
+          }
+        }
+      }
+    }
+
+    // ——— E-mail, si la famille l'a activé ———
+    const { data: family } = await admin
+      .from('families')
+      .select('config')
+      .eq('id', family_id)
+      .single();
+    const emailWanted = family?.config?.notifyByEmail !== false;
     const host = Deno.env.get('SMTP_HOST');
     const smtpUser = Deno.env.get('SMTP_USER');
     const pass = Deno.env.get('SMTP_PASS');
-    if (!host || !smtpUser || !pass) {
-      return json({ sent: false, reason: 'SMTP non configuré' });
+    if (emailWanted && host && smtpUser && pass) {
+      const { data: otherUser } = await admin.auth.admin.getUserById(other.user_id);
+      const to = otherUser?.user?.email;
+      if (to) {
+        const client = new SMTPClient({
+          connection: {
+            hostname: host,
+            port: Number(Deno.env.get('SMTP_PORT') ?? '465'),
+            tls: true,
+            auth: { username: smtpUser, password: pass },
+          },
+        });
+        try {
+          await client.send({
+            from: Deno.env.get('SMTP_SENDER') ?? smtpUser,
+            to,
+            subject: 'Notre Garde — le calendrier a été modifié',
+            content: `${message}\n\nOuvrez l'application pour voir le détail.`,
+          });
+          result.email = true;
+        } finally {
+          await client.close();
+        }
+      }
     }
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: host,
-        port: Number(Deno.env.get('SMTP_PORT') ?? '465'),
-        tls: true,
-        auth: { username: smtpUser, password: pass },
-      },
-    });
-    try {
-      await client.send({
-        from: Deno.env.get('SMTP_SENDER') ?? smtpUser,
-        to,
-        subject: 'Notre Garde — le calendrier a été modifié',
-        content: `${message}\n\nOuvrez l'application pour voir le détail.`,
-      });
-    } finally {
-      await client.close();
-    }
-
-    return json({ sent: true });
+    return json({ sent: true, ...result });
   } catch (error) {
     console.error(error);
     return json({ error: 'Erreur interne' }, 500);
