@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { dayLabel } from '../../core/calendar';
-import { FamilyConfig, ParentIndex, RotationType, dateKey, lastMonday, parseKey } from '../../core/custody';
+import { FamilyConfig, ParentIndex, RotationType, dateKey, isoWeek, lastMonday, parseKey } from '../../core/custody';
 import { HolidayZone } from '../../core/holidays';
 import { FamilyStore } from '../../core/family.store';
 import { ToastService } from '../../core/toast.service';
@@ -24,6 +24,8 @@ export class SetupPage {
   protected rotationType: RotationType = 'week';
   protected anchorInput = dateKey(lastMonday(new Date()));
   protected startParent: ParentIndex = 0;
+  protected evenWeeksParent: ParentIndex = 0;
+  protected alternateYearly = false;
   protected holidayZone: HolidayZone | '' = '';
   protected holidaySplit = false;
   protected firstHalfEvenYears: ParentIndex = 0;
@@ -40,6 +42,11 @@ export class SetupPage {
 
   protected anchorMondayLabel(): string {
     return dayLabel(this.normalizedAnchor());
+  }
+
+  protected currentWeekHint(): string {
+    const { week } = isoWeek(dateKey(new Date()));
+    return `Nous sommes en semaine ${week} (${week % 2 === 0 ? 'paire' : 'impaire'}).`;
   }
 
   private normalizedAnchor(): string {
@@ -77,6 +84,9 @@ export class SetupPage {
         type: this.rotationType,
         anchor: this.normalizedAnchor(),
         start: this.startParent,
+        ...(this.rotationType === 'weekParity'
+          ? { evenWeeksParent: this.evenWeeksParent, alternateYearly: this.alternateYearly }
+          : {}),
       },
       ...(this.holidayZone
         ? {
