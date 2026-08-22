@@ -1,20 +1,22 @@
-# Intégration continue sur toutes les branches (tests + build), puis
-# déploiement sur GitHub Pages — celui-ci uniquement depuis main.
+# Tests + build sur main et sur toute pull request visant main (la
+# vérification a donc lieu avant la fusion). Le déploiement sur GitHub Pages
+# n'a lieu que depuis main.
 # Prérequis côté repo : Settings -> Pages -> Source : « GitHub Actions ».
 name: CI et déploiement GitHub Pages
 
 on:
   push:
-    # Toutes les branches : une branche de travail est vérifiée avant sa fusion.
-    # (Pas de déclencheur pull_request : les branches vivent dans ce dépôt, les
-    # checks du push apparaissent déjà sur la PR — inutile de doubler les runs.)
-    branches: ['**']
+    branches: [main]
+  # Toute fusion proposée vers main est vérifiée avant d'être fusionnée.
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Une exécution à la fois par branche ; un nouveau push annule le run précédent.
+# Une exécution à la fois par branche ou par PR ; un nouveau push annule le
+# run précédent.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -37,15 +39,16 @@ jobs:
         run: npx ng build --base-href=/co-parent/
       - name: Fallback SPA pour les liens profonds (/join/…)
         run: cp dist/notre-garde/browser/index.html dist/notre-garde/browser/404.html
-      - name: Artefact Pages (main uniquement)
-        if: github.ref == 'refs/heads/main'
+      - name: Artefact Pages (push sur main uniquement)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/notre-garde/browser
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main'
+    # Jamais depuis une pull request : on ne publie que ce qui est sur main.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       pages: write
