@@ -159,3 +159,16 @@
   text-align: center;
   padding-top: 0.5rem;
 }
+
+.handover-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+}
+
+.handover-line .time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.85rem;
+}

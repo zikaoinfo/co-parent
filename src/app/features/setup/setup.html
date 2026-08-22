@@ -126,6 +126,55 @@
         }
       }
 
+      <div class="field">
+        <label>Passations</label>
+        <p class="hint">
+          Quand l'enfant change de maison : le jour, l'heure, et qui vient le chercher.
+        </p>
+        @for (handover of handovers(); track $index) {
+          <div class="handover-row">
+            <select
+              [name]="'handoverDay' + $index"
+              [ngModel]="handover.weekday"
+              (ngModelChange)="updateHandover($index, { weekday: $event })"
+              aria-label="Jour de la passation"
+            >
+              @for (option of weekdayOptions; track option.value) {
+                <option [ngValue]="option.value">{{ option.label }}</option>
+              }
+            </select>
+            <input
+              type="time"
+              [name]="'handoverTime' + $index"
+              [ngModel]="handover.time"
+              (ngModelChange)="updateHandover($index, { time: $event })"
+              aria-label="Heure de la passation"
+            />
+            <select
+              [name]="'handoverPickup' + $index"
+              [ngModel]="handover.pickup"
+              (ngModelChange)="updateHandover($index, { pickup: $event })"
+              aria-label="Qui vient chercher l'enfant"
+            >
+              <option ngValue="custodian">Le parent qui prend la garde</option>
+              <option [ngValue]="0">{{ parent0 || 'Vous' }}</option>
+              <option [ngValue]="1">{{ parent1 || "L'autre parent" }}</option>
+            </select>
+            <button
+              type="button"
+              class="danger"
+              (click)="removeHandover($index)"
+              aria-label="Retirer cette passation"
+            >
+              ✕
+            </button>
+          </div>
+        } @empty {
+          <p class="hint">Aucune passation programmée.</p>
+        }
+        <button type="button" (click)="addHandover()">+ Ajouter une passation</button>
+      </div>
+
       <button class="primary" type="submit" [disabled]="saving() || !store.online()">
         {{ saving() ? 'Création…' : 'Créer la famille' }}
       </button>

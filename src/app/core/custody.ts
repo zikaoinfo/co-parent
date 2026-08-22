@@ -20,6 +20,23 @@ export interface HolidaysConfig {
   firstHalfEvenYears: ParentIndex;
 }
 
+/** Jour de la semaine, convention ISO : 1 = lundi … 7 = dimanche. */
+export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+/**
+ * Qui vient chercher l'enfant lors d'une passation : un parent fixe, ou
+ * `'custodian'` = celui qui prend la garde ce jour-là (il vient chercher).
+ */
+export type HandoverPickup = ParentIndex | 'custodian';
+
+/** Passation récurrente : chaque semaine, ce jour-là, à cette heure. */
+export interface Handover {
+  weekday: Weekday;
+  /** Heure locale, format `HH:MM`. */
+  time: string;
+  pickup: HandoverPickup;
+}
+
 export interface FamilyConfig {
   parents: [string, string];
   children: string[];
@@ -39,6 +56,8 @@ export interface FamilyConfig {
   };
   /** Absent = vacances non affichées, rotation inchangée. */
   holidays?: HolidaysConfig;
+  /** Passations récurrentes (jour, heure, parent qui vient chercher). */
+  handovers?: Handover[];
   /** E-mail à l'autre parent à chaque modification (défaut : activé). */
   notifyByEmail?: boolean;
 }
@@ -164,4 +183,40 @@ export function custodianFor(
   const index = ((diff % 14) + 14) % 14;
   const base = PATTERN_223[index];
   return start === 1 ? ((1 - base) as ParentIndex) : base;
+}
+
+/** Jour de la semaine d'une clé, convention ISO : 1 = lundi … 7 = dimanche. */
+export function weekdayOf(key: string): Weekday {
+  return (((parseKey(key).getDay() + 6) % 7) + 1) as Weekday;
+}
+
+/** Vrai si `time` est une heure locale valide au format `HH:MM`. */
+export function isValidTime(time: string): boolean {
+  const match = /^(\d{2}):(\d{2})$/.exec(time);
+  return !!match && Number(match[1]) < 24 && Number(match[2]) < 60;
+}
+
+/**
+ * Passations programmées le jour `key`, triées par heure croissante.
+ * Tableau vide si aucune passation n'est configurée ce jour-là.
+ */
+export function handoversFor(key: string, config: FamilyConfig): Handover[] {
+  const weekday = weekdayOf(key);
+  return (config.handovers ?? [])
+    .filter((h) => h.weekday === weekday)
+    .sort((a, b) => a.time.localeCompare(b.time));
+}
+
+/**
+ * Parent qui vient chercher l'enfant lors de cette passation. `'custodian'`
+ * est résolu en gardien du jour (échanges et vacances compris) : c'est lui qui
+ * prend l'enfant. Peut valoir -1 en rotation manuelle sans jour attribué.
+ */
+export function handoverPickup(
+  handover: Handover,
+  key: string,
+  config: FamilyConfig,
+  overrides: CustodyOverrides = {},
+): Custodian {
+  return handover.pickup === 'custodian' ? custodianFor(key, config, overrides) : handover.pickup;
 }

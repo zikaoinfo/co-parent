@@ -44,6 +44,9 @@
               @if (cell.hasNote) {
                 <span class="note-mark" title="Note">▪</span>
               }
+              @if (cell.pickupTime) {
+                <span class="pickup" [title]="'Passation à ' + cell.pickupTime">🚗</span>
+              }
             </span>
           </button>
         }
@@ -52,6 +55,9 @@
 
     @if (holidayZone(); as zone) {
       <p class="holiday-legend">Jours hachurés : vacances scolaires (zone {{ zone }})</p>
+    }
+    @if (hasHandovers()) {
+      <p class="holiday-legend">🚗 : passation programmée (détail dans le jour)</p>
     }
 
     @if (selectedDay(); as day) {

@@ -2,7 +2,7 @@
  * Helpers purs de présentation du calendrier : grille mensuelle et formats
  * français via Intl (aucune librairie de dates).
  */
-import { dateKey, lastMonday, parseKey } from './custody';
+import { Weekday, dateKey, lastMonday, parseKey } from './custody';
 
 /**
  * Semaines complètes (lundi → dimanche) couvrant le mois donné, en clés
@@ -31,6 +31,7 @@ const DAY_LONG_FMT = new Intl.DateTimeFormat('fr-FR', {
   month: 'long',
 });
 const TIME_FMT = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const WEEKDAY_LONG_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long' });
 
 /** « janvier 2026 » */
 export function monthLabel(year: number, month: number): string {
@@ -48,3 +49,20 @@ export function timeLabel(iso: string): string {
 }
 
 export const WEEKDAY_INITIALS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+/**
+ * Jours de la semaine pour les listes déroulantes : valeur ISO (1 = lundi) et
+ * libellé français. Dérivés d'une semaine de référence commençant le lundi
+ * 5 janvier 2026, pour ne pas coder les noms en dur.
+ */
+export const WEEKDAY_OPTIONS: readonly { value: Weekday; label: string }[] = (
+  [1, 2, 3, 4, 5, 6, 7] as Weekday[]
+).map((value) => ({
+  value,
+  label: WEEKDAY_LONG_FMT.format(new Date(2026, 0, 4 + value)),
+}));
+
+/** « vendredi » depuis un jour ISO (1 = lundi). */
+export function weekdayLabel(weekday: Weekday): string {
+  return WEEKDAY_OPTIONS[weekday - 1].label;
+}

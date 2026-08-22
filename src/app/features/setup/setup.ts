@@ -1,8 +1,18 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { dayLabel } from '../../core/calendar';
-import { FamilyConfig, ParentIndex, RotationType, dateKey, isoWeek, lastMonday, parseKey } from '../../core/custody';
+import { WEEKDAY_OPTIONS, dayLabel } from '../../core/calendar';
+import {
+  FamilyConfig,
+  Handover,
+  ParentIndex,
+  RotationType,
+  dateKey,
+  isValidTime,
+  lastMonday,
+  parseKey,
+} from '../../core/custody';
+
 import { HolidayZone } from '../../core/holidays';
 import { FamilyStore } from '../../core/family.store';
 import { ToastService } from '../../core/toast.service';
@@ -29,7 +39,10 @@ export class SetupPage {
   protected holidayZone: HolidayZone | '' = '';
   protected holidaySplit = false;
   protected firstHalfEvenYears: ParentIndex = 0;
+  protected readonly handovers = signal<Handover[]>([]);
   protected readonly saving = signal(false);
+
+  protected readonly weekdayOptions = WEEKDAY_OPTIONS;
   protected readonly errorMessage = signal<string | null>(null);
 
   /** L'ancre est toujours ramenée au lundi de la semaine choisie. */
@@ -69,12 +82,29 @@ export class SetupPage {
     this.children.update((list) => list.map((c, i) => (i === index ? value : c)));
   }
 
+  protected addHandover(): void {
+    this.handovers.update((list) => [...list, { weekday: 5, time: '18:00', pickup: 'custodian' }]);
+  }
+
+  protected removeHandover(index: number): void {
+    this.handovers.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  protected updateHandover(index: number, patch: Partial<Handover>): void {
+    this.handovers.update((list) => list.map((h, i) => (i === index ? { ...h, ...patch } : h)));
+  }
+
   protected async create(): Promise<void> {
     const children = this.children()
       .map((c) => c.trim())
       .filter(Boolean);
     if (!this.parent0.trim() || !this.parent1.trim() || children.length === 0) {
       this.errorMessage.set('Renseignez les deux prénoms et au moins un enfant.');
+      return;
+    }
+    const handovers = this.handovers();
+    if (handovers.some((h) => !isValidTime(h.time))) {
+      this.errorMessage.set("Renseignez l'heure de chaque passation.");
       return;
     }
     const config: FamilyConfig = {
@@ -97,6 +127,7 @@ export class SetupPage {
             },
           }
         : {}),
+      ...(handovers.length ? { handovers } : {}),
       notifyByEmail: true,
     };
     this.saving.set(true);

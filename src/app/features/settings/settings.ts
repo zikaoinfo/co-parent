@@ -1,8 +1,18 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { dayLabel } from '../../core/calendar';
-import { FamilyConfig, ParentIndex, RotationType, dateKey, isoWeek, lastMonday, parseKey } from '../../core/custody';
+import { WEEKDAY_OPTIONS, dayLabel } from '../../core/calendar';
+import {
+  FamilyConfig,
+  Handover,
+  ParentIndex,
+  RotationType,
+  dateKey,
+  isValidTime,
+  lastMonday,
+  parseKey,
+} from '../../core/custody';
+
 import { HolidayZone } from '../../core/holidays';
 import { AuthService } from '../../core/auth.service';
 import { FamilyStore } from '../../core/family.store';
@@ -34,7 +44,10 @@ export class SettingsPage {
   protected holidaySplit: boolean;
   protected firstHalfEvenYears: ParentIndex;
   protected notifyByEmail: boolean;
+  protected readonly handovers = signal<Handover[]>([]);
   protected readonly saving = signal(false);
+
+  protected readonly weekdayOptions = WEEKDAY_OPTIONS;
 
   protected readonly inviteLink = computed(() => {
     const token = this.store.inviteToken();
@@ -55,6 +68,7 @@ export class SettingsPage {
     this.holidaySplit = config?.holidays?.split ?? false;
     this.firstHalfEvenYears = config?.holidays?.firstHalfEvenYears ?? 0;
     this.notifyByEmail = config?.notifyByEmail ?? true;
+    this.handovers.set((config?.handovers ?? []).map((h) => ({ ...h })));
   }
 
   protected anchorMondayLabel(): string {
@@ -82,12 +96,29 @@ export class SettingsPage {
     this.children.update((list) => list.map((c, i) => (i === index ? value : c)));
   }
 
+  protected addHandover(): void {
+    this.handovers.update((list) => [...list, { weekday: 5, time: '18:00', pickup: 'custodian' }]);
+  }
+
+  protected removeHandover(index: number): void {
+    this.handovers.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  protected updateHandover(index: number, patch: Partial<Handover>): void {
+    this.handovers.update((list) => list.map((h, i) => (i === index ? { ...h, ...patch } : h)));
+  }
+
   protected async save(): Promise<void> {
     const children = this.children()
       .map((c) => c.trim())
       .filter(Boolean);
     if (!this.parent0.trim() || !this.parent1.trim() || children.length === 0) {
       this.toast.show('Renseignez les deux prénoms et au moins un enfant.');
+      return;
+    }
+    const handovers = this.handovers();
+    if (handovers.some((h) => !isValidTime(h.time))) {
+      this.toast.show("Renseignez l'heure de chaque passation.");
       return;
     }
     const config: FamilyConfig = {
@@ -110,6 +141,7 @@ export class SettingsPage {
             },
           }
         : {}),
+      ...(handovers.length ? { handovers } : {}),
       notifyByEmail: this.notifyByEmail,
     };
     this.saving.set(true);
