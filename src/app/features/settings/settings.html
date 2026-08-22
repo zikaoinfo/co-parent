@@ -36,12 +36,13 @@
       <label for="rotation">Rythme de garde</label>
       <select id="rotation" name="rotation" [(ngModel)]="rotationType">
         <option value="week">Semaines alternées</option>
+        <option value="weekParity">Semaines paires / impaires</option>
         <option value="223">2-2-3 (cycle de 14 jours)</option>
         <option value="manual">Manuel (jour par jour)</option>
       </select>
     </div>
 
-    @if (rotationType !== 'manual') {
+    @if (rotationType === 'week' || rotationType === '223') {
       <div class="field">
         <label for="anchor">Semaine de référence</label>
         <input id="anchor" type="date" name="anchor" [(ngModel)]="anchorInput" />
@@ -54,6 +55,34 @@
           <option [ngValue]="1">{{ parent1 || 'Parent 2' }}</option>
         </select>
       </div>
+    }
+
+    @if (rotationType === 'weekParity') {
+      <div class="field">
+        <label for="evenWeeks">
+          {{ alternateYearly ? 'Qui a les semaines paires les années paires ?' : 'Qui a les semaines paires ?' }}
+        </label>
+        <select id="evenWeeks" name="evenWeeks" [(ngModel)]="evenWeeksParent">
+          <option [ngValue]="0">{{ parent0 || 'Parent 1' }}</option>
+          <option [ngValue]="1">{{ parent1 || 'Parent 2' }}</option>
+        </select>
+        <p class="hint">Numéro de semaine ISO (du lundi au dimanche). {{ currentWeekHint() }}</p>
+      </div>
+      <div class="field">
+        <label class="check">
+          <input type="checkbox" name="alternateYearly" [(ngModel)]="alternateYearly" />
+          Inverser l'attribution chaque année
+        </label>
+        @if (alternateYearly) {
+          <p class="hint">
+            Les années paires, {{ evenWeeksParent === 0 ? (parent0 || 'Parent 1') : (parent1 || 'Parent 2') }}
+            a les semaines paires ; les années impaires, c'est l'inverse.
+          </p>
+        }
+      </div>
+    }
+
+    @if (rotationType !== 'manual') {
       <p class="hint">
         ⚠ Modifier le rythme ou la semaine de référence recalcule tout le calendrier, passé
         compris. Les jours échangés (⇄) sont conservés.

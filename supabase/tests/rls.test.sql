@@ -82,6 +82,11 @@ select tests.expect_error(
        "rotation": {"type": "biweek", "anchor": "2026-01-05", "start": 0}}'::jsonb) $q$,
   'rotation', 'create_family rejette un type de rotation inconnu');
 
+select tests.expect_error(
+  $q$ select create_family('{"parents": ["A", "B"], "children": ["X"],
+       "rotation": {"type": "weekParity", "anchor": "2026-01-05", "start": 0, "evenWeeksParent": 2}}'::jsonb) $q$,
+  'rotation', 'create_family rejette un evenWeeksParent invalide');
+
 -- u1 est membre : lecture + écritures sur les tables de données.
 do $$
 declare
@@ -327,6 +332,22 @@ begin
     'u1 ne voit pas la famille 2');
   perform tests.check((select count(*) from families) = 1,
     'u1 ne voit que sa propre famille');
+end
+$$;
+
+-- Le rythme « semaines paires / impaires » est accepté à la création.
+do $$
+declare
+  res json;
+begin
+  res := create_family('{
+    "parents": ["Fanny", "Gilles"],
+    "children": ["Hugo"],
+    "rotation": {"type": "weekParity", "anchor": "2026-01-05", "start": 0,
+                 "evenWeeksParent": 1, "alternateYearly": true}
+  }'::jsonb);
+  perform tests.check(res->>'family_id' is not null,
+    'create_family accepte le rythme weekParity');
 end
 $$;
 

@@ -9,6 +9,7 @@ import {
   RotationType,
   dateKey,
   isValidTime,
+  isoWeek,
   lastMonday,
   parseKey,
 } from '../../core/custody';
@@ -37,6 +38,8 @@ export class SettingsPage {
   protected rotationType: RotationType;
   protected anchorInput: string;
   protected startParent: ParentIndex;
+  protected evenWeeksParent: ParentIndex;
+  protected alternateYearly: boolean;
   protected holidayZone: HolidayZone | '';
   protected holidaySplit: boolean;
   protected firstHalfEvenYears: ParentIndex;
@@ -59,6 +62,8 @@ export class SettingsPage {
     this.rotationType = config?.rotation.type ?? 'week';
     this.anchorInput = config?.rotation.anchor ?? dateKey(lastMonday(new Date()));
     this.startParent = config?.rotation.start ?? 0;
+    this.evenWeeksParent = config?.rotation.evenWeeksParent ?? 0;
+    this.alternateYearly = config?.rotation.alternateYearly ?? false;
     this.holidayZone = config?.holidays?.zone ?? '';
     this.holidaySplit = config?.holidays?.split ?? false;
     this.firstHalfEvenYears = config?.holidays?.firstHalfEvenYears ?? 0;
@@ -68,6 +73,11 @@ export class SettingsPage {
 
   protected anchorMondayLabel(): string {
     return dayLabel(this.normalizedAnchor());
+  }
+
+  protected currentWeekHint(): string {
+    const { week } = isoWeek(dateKey(new Date()));
+    return `Nous sommes en semaine ${week} (${week % 2 === 0 ? 'paire' : 'impaire'}).`;
   }
 
   private normalizedAnchor(): string {
@@ -118,6 +128,9 @@ export class SettingsPage {
         type: this.rotationType,
         anchor: this.normalizedAnchor(),
         start: this.startParent,
+        ...(this.rotationType === 'weekParity'
+          ? { evenWeeksParent: this.evenWeeksParent, alternateYearly: this.alternateYearly }
+          : {}),
       },
       ...(this.holidayZone
         ? {
