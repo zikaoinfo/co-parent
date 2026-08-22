@@ -14,6 +14,7 @@ import {
   parseKey,
 } from '../../core/custody';
 import { HolidayZone } from '../../core/holidays';
+import { BUILD_INFO } from '../../../environments/build-info';
 import { AuthService } from '../../core/auth.service';
 import { FamilyStore } from '../../core/family.store';
 import { PushService } from '../../core/push.service';
@@ -48,6 +49,16 @@ export class SettingsPage {
   protected readonly saving = signal(false);
 
   protected readonly weekdayOptions = WEEKDAY_OPTIONS;
+
+  /** Version déployée : numéro de build, commit et date (voir scripts/build-info.mjs). */
+  protected readonly buildInfo = BUILD_INFO;
+
+  /** « 22 août 2026 », vide si la date du commit est indéterminée. */
+  protected readonly buildDate = computed(() =>
+    BUILD_INFO.date
+      ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(BUILD_INFO.date))
+      : '',
+  );
 
   protected readonly inviteLink = computed(() => {
     const token = this.store.inviteToken();

@@ -88,3 +88,12 @@ form button[type='submit'] {
   flex: 0 0 44px;
   padding: 0;
 }
+
+.section code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
