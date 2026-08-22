@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { WEEKDAY_INITIALS, monthGrid, monthLabel } from '../../core/calendar';
-import { Custodian, custodianFor, dateKey } from '../../core/custody';
+import { Custodian, custodianFor, dateKey, handoversFor } from '../../core/custody';
 import { holidayFor } from '../../core/holidays';
 import { FamilyStore } from '../../core/family.store';
 import { DayPanel } from './day-panel';
@@ -16,6 +16,7 @@ interface DayCell {
   hasEvents: boolean;
   hasNote: boolean;
   handover: boolean; // gardien différent du jour précédent -> trait de passation
+  pickupTime: string | null; // heure de la passation programmée dans les réglages
   holiday: boolean; // vacances scolaires (zone de la famille)
 }
 
@@ -59,6 +60,7 @@ export class CalendarPage {
           hasEvents: (eventsByDay[key]?.length ?? 0) > 0,
           hasNote: key in notes,
           handover: previous !== null && previous !== custodian,
+          pickupTime: handoversFor(key, config)[0]?.time ?? null,
           holiday: zone ? holidayFor(key, zone) !== null : false,
         };
         previous = custodian;
@@ -66,6 +68,11 @@ export class CalendarPage {
       }),
     );
   });
+
+  /** Des passations sont-elles programmées (pour la légende) ? */
+  protected readonly hasHandovers = computed(
+    () => (this.store.config()?.handovers?.length ?? 0) > 0,
+  );
 
   /** Zone de vacances configurée (pour la légende). */
   protected readonly holidayZone = computed(() => this.store.config()?.holidays?.zone ?? null);

@@ -1,11 +1,16 @@
 import {
   CustodyOverrides,
   FamilyConfig,
+  Handover,
   custodianFor,
   dateKey,
   daysBetween,
+  handoverPickup,
+  handoversFor,
+  isValidTime,
   lastMonday,
   parseKey,
+  weekdayOf,
 } from './custody';
 
 function config(
@@ -191,5 +196,75 @@ describe('custodianFor — overrides (échanges ponctuels)', () => {
     expect(custodianFor('2026-01-06', cfg, overrides)).toBe(0);
     expect(custodianFor('2026-01-07', cfg, overrides)).toBe(1);
     expect(custodianFor('2026-01-08', cfg, overrides)).toBe(0);
+  });
+});
+
+describe('weekdayOf', () => {
+  it('numérote les jours en ISO (1 = lundi … 7 = dimanche)', () => {
+    // Semaine du lundi 5 janvier 2026.
+    expect(weekdayOf('2026-01-05')).toBe(1);
+    expect(weekdayOf('2026-01-09')).toBe(5);
+    expect(weekdayOf('2026-01-11')).toBe(7);
+  });
+});
+
+describe('isValidTime', () => {
+  it('accepte une heure HH:MM valide', () => {
+    expect(isValidTime('00:00')).toBe(true);
+    expect(isValidTime('18:30')).toBe(true);
+    expect(isValidTime('23:59')).toBe(true);
+  });
+
+  it('refuse une saisie vide ou hors bornes', () => {
+    expect(isValidTime('')).toBe(false);
+    expect(isValidTime('8:30')).toBe(false);
+    expect(isValidTime('24:00')).toBe(false);
+    expect(isValidTime('12:60')).toBe(false);
+  });
+});
+
+describe('handoversFor / handoverPickup (passations)', () => {
+  const vendrediSoir: Handover = { weekday: 5, time: '18:00', pickup: 'custodian' };
+  const mercrediMidi: Handover = { weekday: 3, time: '12:00', pickup: 1 };
+
+  function withHandovers(handovers: Handover[]): FamilyConfig {
+    return { ...config('week', ANCHOR, 0), handovers };
+  }
+
+  it('ne retient que les passations du bon jour de la semaine', () => {
+    const cfg = withHandovers([vendrediSoir, mercrediMidi]);
+    expect(handoversFor('2026-01-09', cfg)).toEqual([vendrediSoir]); // vendredi
+    expect(handoversFor('2026-01-07', cfg)).toEqual([mercrediMidi]); // mercredi
+    expect(handoversFor('2026-01-05', cfg)).toEqual([]); // lundi
+  });
+
+  it('trie les passations du jour par heure croissante', () => {
+    const soir: Handover = { weekday: 5, time: '19:30', pickup: 0 };
+    const matin: Handover = { weekday: 5, time: '08:15', pickup: 1 };
+    expect(handoversFor('2026-01-09', withHandovers([soir, matin]))).toEqual([matin, soir]);
+  });
+
+  it('config sans passations : tableau vide', () => {
+    expect(handoversFor('2026-01-09', config('week', ANCHOR, 0))).toEqual([]);
+  });
+
+  it('un parent fixe vient chercher quel que soit le gardien', () => {
+    const cfg = withHandovers([mercrediMidi]);
+    expect(handoverPickup(mercrediMidi, '2026-01-07', cfg)).toBe(1);
+    expect(handoverPickup(mercrediMidi, '2026-01-14', cfg)).toBe(1);
+  });
+
+  it("« custodian » désigne le gardien du jour (échanges compris)", () => {
+    const cfg = withHandovers([vendrediSoir]);
+    // Semaine ancre : parent 0 ; semaine suivante : parent 1.
+    expect(handoverPickup(vendrediSoir, '2026-01-09', cfg)).toBe(0);
+    expect(handoverPickup(vendrediSoir, '2026-01-16', cfg)).toBe(1);
+    // Jour échangé : c'est le nouveau gardien qui vient chercher.
+    expect(handoverPickup(vendrediSoir, '2026-01-09', cfg, { '2026-01-09': 1 })).toBe(1);
+  });
+
+  it('rotation manuelle sans échange : gardien non attribué (-1)', () => {
+    const cfg: FamilyConfig = { ...config('manual', ANCHOR, 0), handovers: [vendrediSoir] };
+    expect(handoverPickup(vendrediSoir, '2026-01-09', cfg)).toBe(-1);
   });
 });
