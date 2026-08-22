@@ -39,8 +39,10 @@ ajoutée : `@supabase/supabase-js`.
 ### 2. GitHub Pages
 
 1. Settings du repo → **Pages** → Source : **GitHub Actions**.
-2. Chaque push sur `main` déclenche `.github/workflows/deploy.yml`
-   (tests, build avec `--base-href=/co-parent/`, publication).
+2. `.github/workflows/deploy.yml` tourne à **chaque push, sur n'importe
+   quelle branche** : tests unitaires puis build avec
+   `--base-href=/co-parent/`. La publication sur Pages n'a lieu que depuis
+   `main` — une branche de travail est donc vérifiée sans jamais déployer.
    L'app est servie sur `https://<utilisateur>.github.io/co-parent/` —
    c'est cette URL qu'il faut mettre en Site URL côté Supabase.
 3. L'app est installable (PWA) depuis Safari iOS (« Sur l'écran
