@@ -6,6 +6,10 @@
 /out-tsc
 /bazel-out
 
+# Métadonnées de build générées (scripts/build-info.mjs)
+/src/environments/build-info.ts
+/public/version.json
+
 # Node
 /node_modules
 npm-debug.log

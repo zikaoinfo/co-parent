@@ -39,8 +39,11 @@ ajoutée : `@supabase/supabase-js`.
 ### 2. GitHub Pages
 
 1. Settings du repo → **Pages** → Source : **GitHub Actions**.
-2. Chaque push sur `main` déclenche `.github/workflows/deploy.yml`
-   (tests, build avec `--base-href=/co-parent/`, publication).
+2. `.github/workflows/deploy.yml` tourne sur **`main` et sur toute pull
+   request visant `main`** : tests unitaires puis build avec
+   `--base-href=/co-parent/`. Une fusion proposée est donc vérifiée avant
+   d'être fusionnée ; la publication sur Pages, elle, n'a lieu qu'au push
+   sur `main`.
    L'app est servie sur `https://<utilisateur>.github.io/co-parent/` —
    c'est cette URL qu'il faut mettre en Site URL côté Supabase.
 3. L'app est installable (PWA) depuis Safari iOS (« Sur l'écran
@@ -126,6 +129,30 @@ le panneau du jour.
 
 C'est une information partagée entre les deux parents, pas une règle de calcul :
 la rotation et les échanges restent seuls maîtres de l'attribution des jours.
+
+## Version déployée
+
+Le numéro de version est dérivé de git par `scripts/build-info.mjs` : c'est le
+**nombre de commits** de la branche construite, donc il augmente à chaque
+fusion sur `main`. Le script est lancé automatiquement par npm (`postinstall`,
+`prestart`, `prebuild`) et produit deux fichiers, non versionnés :
+
+- `src/environments/build-info.ts` — affiché dans **Réglages → Version**
+  (« Version 42 — commit `a1b2c3d` du 22 août 2026 ») ;
+- `public/version.json` — copié à la racine du site, pour vérifier ce qui est
+  en ligne sans ouvrir l'app :
+
+  ```bash
+  curl -s https://<utilisateur>.github.io/co-parent/version.json
+  ```
+
+  Ce fichier n'est pas mis en cache par le service worker : il reflète toujours
+  le dernier déploiement, même si un onglet ouvert affiche encore l'ancienne
+  version en attendant la mise à jour du service worker.
+
+Le workflow fait donc un `checkout` avec `fetch-depth: 0` — sans l'historique
+complet, le décompte des commits serait faux.
+
 
 ## Développement
 

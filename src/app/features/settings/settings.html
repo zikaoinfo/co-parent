@@ -220,6 +220,21 @@
   </div>
 
   <div class="card section">
+    <h2>Version</h2>
+    @if (buildInfo.build) {
+      <p class="hint">
+        Version <strong>{{ buildInfo.build }}</strong> — commit
+        <code>{{ buildInfo.commit }}</code>
+        @if (buildDate()) {
+          <span>du {{ buildDate() }}</span>
+        }
+      </p>
+    } @else {
+      <p class="hint">Version de développement (build local, hors dépôt git).</p>
+    }
+  </div>
+
+  <div class="card section">
     <h2>Compte</h2>
     <p class="hint">Connecté·e en tant que {{ auth.email() }}</p>
     <button type="button" class="danger" (click)="signOut()">Se déconnecter</button>
