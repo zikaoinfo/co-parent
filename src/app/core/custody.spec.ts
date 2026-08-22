@@ -123,6 +123,76 @@ describe('custodianFor — rotation week (semaines alternées)', () => {
   });
 });
 
+describe('isoWeek', () => {
+  it('numérote les semaines ISO (lundi premier jour)', () => {
+    // Le 1er janvier 2026 est un jeudi : la semaine du 29/12/2025 au 04/01/2026
+    // est la semaine 1 de l'année ISO 2026.
+    expect(isoWeek('2025-12-29')).toEqual({ week: 1, year: 2026 });
+    expect(isoWeek('2026-01-04')).toEqual({ week: 1, year: 2026 });
+    expect(isoWeek('2026-01-05')).toEqual({ week: 2, year: 2026 });
+    expect(isoWeek('2026-01-11')).toEqual({ week: 2, year: 2026 });
+  });
+
+  it("gère les années ISO à 53 semaines et le rattachement d'année", () => {
+    // 2026 est une année ISO à 53 semaines (1er janvier un jeudi).
+    expect(isoWeek('2026-12-28')).toEqual({ week: 53, year: 2026 });
+    expect(isoWeek('2027-01-03')).toEqual({ week: 53, year: 2026 });
+    expect(isoWeek('2027-01-04')).toEqual({ week: 1, year: 2027 });
+    // Le 30/12/2024 (lundi) appartient déjà à la semaine 1 de 2025.
+    expect(isoWeek('2024-12-30')).toEqual({ week: 1, year: 2025 });
+  });
+});
+
+describe('custodianFor — rotation weekParity (semaines paires / impaires)', () => {
+  function parityConfig(evenWeeksParent: 0 | 1, alternateYearly = false): FamilyConfig {
+    return {
+      parents: ['Alice', 'Bruno'],
+      children: ['Léa'],
+      rotation: { type: 'weekParity', anchor: ANCHOR, start: 0, evenWeeksParent, alternateYearly },
+    };
+  }
+
+  it('attribue les semaines paires au parent choisi, les impaires à l’autre', () => {
+    const cfg = parityConfig(0);
+    // Semaine 2 (paire) : 05/01 au 11/01/2026.
+    expect(custodianFor('2026-01-05', cfg)).toBe(0);
+    expect(custodianFor('2026-01-11', cfg)).toBe(0);
+    // Semaine 3 (impaire).
+    expect(custodianFor('2026-01-12', cfg)).toBe(1);
+    // Semaine 1 (impaire), à cheval sur le changement d'année civile.
+    expect(custodianFor('2025-12-29', cfg)).toBe(1);
+    expect(custodianFor('2026-01-04', cfg)).toBe(1);
+  });
+
+  it('respecte evenWeeksParent = 1', () => {
+    const cfg = parityConfig(1);
+    expect(custodianFor('2026-01-05', cfg)).toBe(1); // semaine 2, paire
+    expect(custodianFor('2026-01-12', cfg)).toBe(0); // semaine 3, impaire
+  });
+
+  it("inverse l'attribution les années ISO impaires quand alternateYearly est actif", () => {
+    const cfg = parityConfig(0, true);
+    // 2026 (paire) : parent 0 a les semaines paires.
+    expect(custodianFor('2026-01-05', cfg)).toBe(0); // semaine 2
+    expect(custodianFor('2026-01-12', cfg)).toBe(1); // semaine 3
+    // 2027 (impaire) : inversé, parent 1 a les semaines paires.
+    expect(custodianFor('2027-01-04', cfg)).toBe(0); // semaine 1, impaire
+    expect(custodianFor('2027-01-11', cfg)).toBe(1); // semaine 2, paire
+  });
+
+  it("sans alternance annuelle, la semaine 53 puis la semaine 1 donnent deux semaines impaires consécutives", () => {
+    const cfg = parityConfig(0);
+    expect(custodianFor('2026-12-28', cfg)).toBe(1); // semaine 53 de 2026
+    expect(custodianFor('2027-01-04', cfg)).toBe(1); // semaine 1 de 2027
+  });
+
+  it("l'échange ponctuel prime sur la parité", () => {
+    const cfg = parityConfig(0);
+    const overrides: CustodyOverrides = { '2026-01-05': 1 };
+    expect(custodianFor('2026-01-05', cfg, overrides)).toBe(1);
+  });
+});
+
 describe('custodianFor — rotation 2-2-3', () => {
   const cfg = config('223', ANCHOR, 0);
   const PATTERN = [0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1];

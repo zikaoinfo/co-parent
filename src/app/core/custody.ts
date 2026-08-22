@@ -9,7 +9,7 @@
 import { HolidayZone, holidayFor } from './holidays';
 
 export type ParentIndex = 0 | 1;
-export type RotationType = 'week' | '223' | 'manual';
+export type RotationType = 'week' | 'weekParity' | '223' | 'manual';
 
 /** Prise en compte des vacances scolaires françaises. */
 export interface HolidaysConfig {
@@ -46,6 +46,13 @@ export interface FamilyConfig {
     anchor: string;
     /** Parent qui a la garde la semaine ancre. */
     start: ParentIndex;
+    /**
+     * Type 'weekParity' : parent qui a les semaines ISO paires
+     * (les années ISO paires si `alternateYearly`).
+     */
+    evenWeeksParent?: ParentIndex;
+    /** Type 'weekParity' : inverse l'attribution les années ISO impaires. */
+    alternateYearly?: boolean;
   };
   /** Absent = vacances non affichées, rotation inchangée. */
   holidays?: HolidaysConfig;
@@ -101,6 +108,23 @@ export function daysBetween(from: string, to: string): number {
 }
 
 /**
+ * Numéro de semaine ISO 8601 (lundi premier jour, semaine 1 = celle du premier
+ * jeudi) et année ISO correspondante — celle-ci peut différer de l'année civile
+ * fin décembre / début janvier, ce qui garantit qu'une semaine n'est jamais
+ * coupée en deux par un changement d'année.
+ */
+export function isoWeek(key: string): { week: number; year: number } {
+  const [y, m, d] = key.split('-').map(Number);
+  const thursday = new Date(Date.UTC(y, m - 1, d));
+  thursday.setUTCDate(thursday.getUTCDate() + 3 - ((thursday.getUTCDay() + 6) % 7));
+  const year = thursday.getUTCFullYear();
+  const firstThursday = new Date(Date.UTC(year, 0, 4));
+  firstThursday.setUTCDate(firstThursday.getUTCDate() + 3 - ((firstThursday.getUTCDay() + 6) % 7));
+  const week = 1 + Math.round((thursday.getTime() - firstThursday.getTime()) / (7 * 86_400_000));
+  return { week, year };
+}
+
+/**
  * Parent gardien pendant les vacances si le partage moitié-moitié est actif
  * et que `key` tombe dans une période de vacances, sinon null.
  * Première moitié (jours arrondis au supérieur) au parent désigné pour la
@@ -139,6 +163,17 @@ export function custodianFor(
 
   const { type, anchor, start } = config.rotation;
   if (type === 'manual') return -1;
+
+  if (type === 'weekParity') {
+    // Une année ISO à 53 semaines donne deux semaines impaires consécutives
+    // (53 puis 1) : c'est inhérent au rythme « semaines paires / impaires ».
+    const { week, year } = isoWeek(key);
+    let evenParent = config.rotation.evenWeeksParent ?? 0;
+    if (config.rotation.alternateYearly && year % 2 !== 0) {
+      evenParent = (1 - evenParent) as ParentIndex;
+    }
+    return week % 2 === 0 ? evenParent : ((1 - evenParent) as ParentIndex);
+  }
 
   const diff = daysBetween(anchor, key);
   if (type === 'week') {
