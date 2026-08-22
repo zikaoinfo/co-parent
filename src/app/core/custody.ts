@@ -107,6 +107,18 @@ export function daysBetween(from: string, to: string): number {
   return (Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000;
 }
 
+/** Clé du jour situé `days` jours après `key` (négatif = avant). */
+export function addDays(key: string, days: number): string {
+  const [y, m, d] = key.split('-').map(Number);
+  return dateKey(new Date(y, m - 1, d + days));
+}
+
+/** Minutes depuis minuit d'une heure `HH:MM`. */
+export function minutesOfTime(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+}
+
 /**
  * Numéro de semaine ISO 8601 (lundi premier jour, semaine 1 = celle du premier
  * jeudi) et année ISO correspondante — celle-ci peut différer de l'année civile
@@ -147,8 +159,28 @@ export function holidayCustodian(key: string, config: FamilyConfig): ParentIndex
 }
 
 /**
- * Gardien du jour `key`. Priorité : échange ponctuel > partage des vacances
- * scolaires > rotation.
+ * Passation qui ouvre le cycle de garde : la première de la semaine (jour puis
+ * heure). C'est elle qui décide du jour où la rotation bascule — configurer une
+ * passation le vendredi fait courir la semaine de garde du vendredi au vendredi,
+ * week-end compris. `null` si aucune passation n'est configurée.
+ */
+export function cycleHandover(handovers: readonly Handover[] | undefined): Handover | null {
+  const sorted = [...(handovers ?? [])].sort(
+    (a, b) => a.weekday - b.weekday || a.time.localeCompare(b.time),
+  );
+  return sorted[0] ?? null;
+}
+
+/** Décalage du début de cycle, en jours depuis le lundi (0 sans passation). */
+function cycleShiftDays(config: FamilyConfig): number {
+  return (cycleHandover(config.handovers)?.weekday ?? 1) - 1;
+}
+
+/**
+ * Gardien du jour `key` — précisément : celui chez qui l'enfant passe la nuit,
+ * donc le gardien après la passation du jour s'il y en a une (`daySplit` donne
+ * le détail intra-journalier). Priorité : échange ponctuel > partage des
+ * vacances scolaires > rotation.
  */
 export function custodianFor(
   key: string,
@@ -164,10 +196,15 @@ export function custodianFor(
   const { type, anchor, start } = config.rotation;
   if (type === 'manual') return -1;
 
+  // Les rythmes hebdomadaires basculent à la passation, pas le lundi à minuit :
+  // on ramène le jour au cycle qui le contient. Le 2-2-3 porte ses propres
+  // transitions dans son pattern, il n'est pas décalé.
+  const shift = type === '223' ? 0 : cycleShiftDays(config);
+
   if (type === 'weekParity') {
     // Une année ISO à 53 semaines donne deux semaines impaires consécutives
     // (53 puis 1) : c'est inhérent au rythme « semaines paires / impaires ».
-    const { week, year } = isoWeek(key);
+    const { week, year } = isoWeek(shift ? addDays(key, -shift) : key);
     let evenParent = config.rotation.evenWeeksParent ?? 0;
     if (config.rotation.alternateYearly && year % 2 !== 0) {
       evenParent = (1 - evenParent) as ParentIndex;
@@ -175,7 +212,7 @@ export function custodianFor(
     return week % 2 === 0 ? evenParent : ((1 - evenParent) as ParentIndex);
   }
 
-  const diff = daysBetween(anchor, key);
+  const diff = daysBetween(anchor, key) - shift;
   if (type === 'week') {
     return ((((start + Math.floor(diff / 7)) % 2) + 2) % 2) as ParentIndex;
   }
@@ -219,4 +256,40 @@ export function handoverPickup(
   overrides: CustodyOverrides = {},
 ): Custodian {
   return handover.pickup === 'custodian' ? custodianFor(key, config, overrides) : handover.pickup;
+}
+
+/** Journée coupée en deux par une passation : qui avant, qui après, à quelle heure. */
+export interface DaySplit {
+  /** Gardien du début de journée (celui de la veille). */
+  before: Custodian;
+  /** Gardien de la fin de journée et de la nuit (= `custodianFor`). */
+  after: Custodian;
+  /** Minutes depuis minuit ; 0 = bascule à minuit, aucune passation configurée. */
+  atMinutes: number;
+  /** Heure `HH:MM` de la passation, `null` si la bascule se fait à minuit. */
+  time: string | null;
+}
+
+/**
+ * Partage du jour `key` quand l'enfant change de maison ce jour-là, sinon
+ * `null`. Le changement est constaté sur l'attribution (rotation, échange
+ * ponctuel ou partage des vacances) ; l'heure vient de la passation configurée
+ * ce jour de la semaine — à défaut, la bascule est réputée se faire à minuit et
+ * la journée reste d'une seule couleur.
+ */
+export function daySplit(
+  key: string,
+  config: FamilyConfig,
+  overrides: CustodyOverrides = {},
+): DaySplit | null {
+  const after = custodianFor(key, config, overrides);
+  const before = custodianFor(addDays(key, -1), config, overrides);
+  if (before === after) return null;
+  const handover = handoversFor(key, config)[0] ?? null;
+  return {
+    before,
+    after,
+    atMinutes: handover ? minutesOfTime(handover.time) : 0,
+    time: handover?.time ?? null,
+  };
 }

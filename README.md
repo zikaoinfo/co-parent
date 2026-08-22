@@ -127,8 +127,19 @@ passations sont possibles (utile en 2-2-3). Les jours concernés portent un 🚗
 dans la grille ; le détail (« 18:00 — Alice vient chercher Léa ») s'affiche dans
 le panneau du jour.
 
-C'est une information partagée entre les deux parents, pas une règle de calcul :
-la rotation et les échanges restent seuls maîtres de l'attribution des jours.
+La passation **cale le cycle de garde** : avec les rythmes hebdomadaires
+(« semaines alternées » et « semaines paires / impaires »), la bascule a lieu à
+la première passation de la semaine, pas le lundi à minuit. Configurer une
+passation le vendredi fait donc courir la semaine de garde du vendredi au
+vendredi — le week-end reste chez le parent qui a récupéré l'enfant. Le 2-2-3
+n'est pas décalé : ses transitions sont déjà portées par son pattern de
+14 jours.
+
+Le jour de la bascule est **partagé entre les deux parents** : la case du
+calendrier est coupée au prorata de l'heure (passation à midi = moitié-moitié,
+à 18:00 = trois quarts / un quart), la part gauche revenant au parent du matin.
+`custodianFor` continue de désigner le gardien de la nuit ; `daySplit` donne le
+détail intra-journalier.
 
 ## Version déployée
 

@@ -3,9 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { dayLabel, timeLabel } from '../../core/calendar';
 import {
   Custodian,
+  DaySplit,
   Handover,
   ParentIndex,
   custodianFor,
+  daySplit,
   handoverPickup,
   handoversFor,
   holidayCustodian,
@@ -65,6 +67,18 @@ export class DayPanel {
     return (
       !(this.day() in this.store.overrideIndex()) && holidayCustodian(this.day(), config) !== null
     );
+  });
+
+  /**
+   * Partage de la journée quand l'enfant change de maison ce jour-là, à l'heure
+   * de la passation. `null` si la garde ne change pas, ou si le changement se
+   * fait à minuit faute de passation configurée ce jour de la semaine.
+   */
+  protected readonly split = computed<DaySplit | null>(() => {
+    const config = this.store.config();
+    if (!config) return null;
+    const value = daySplit(this.day(), config, this.store.overrideIndex());
+    return value?.time ? value : null;
   });
 
   /** Passations programmées ce jour-là (réglages), triées par heure. */

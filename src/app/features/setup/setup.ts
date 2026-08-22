@@ -1,13 +1,15 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { WEEKDAY_OPTIONS, dayLabel } from '../../core/calendar';
+import { WEEKDAY_OPTIONS, dayLabel, weekdayLabel } from '../../core/calendar';
 import {
   FamilyConfig,
   Handover,
   ParentIndex,
   RotationType,
   dateKey,
+  addDays,
+  cycleHandover,
   isValidTime,
   isoWeek,
   lastMonday,
@@ -81,6 +83,19 @@ export class SetupPage {
 
   protected updateChild(index: number, value: string): void {
     this.children.update((list) => list.map((c, i) => (i === index ? value : c)));
+  }
+
+  /** « vendredi 9 janvier » : premier jour du cycle de référence. */
+  protected cycleStartDayLabel(): string | null {
+    const handover = cycleHandover(this.handovers());
+    if (!handover || this.rotationType === 'manual' || this.rotationType === '223') return null;
+    return dayLabel(addDays(this.normalizedAnchor(), handover.weekday - 1));
+  }
+
+  /** « vendredi à 18:00 » : la passation qui fait basculer la rotation. */
+  protected cycleStartLabel(): string | null {
+    const handover = cycleHandover(this.handovers());
+    return handover ? `${weekdayLabel(handover.weekday)} à ${handover.time}` : null;
   }
 
   protected addHandover(): void {

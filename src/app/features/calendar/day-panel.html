@@ -15,7 +15,13 @@
 
   <!-- Gardien + échange -->
   <div class="block custody">
-    <span class="chip c{{ custodian() }}">{{ parentName(custodian()) }}</span>
+    @if (split(); as day) {
+      <span class="chip c{{ day.before }}">{{ parentName(day.before) }}</span>
+      <span class="until">jusqu'à {{ day.time }}, puis</span>
+      <span class="chip c{{ day.after }}">{{ parentName(day.after) }}</span>
+    } @else {
+      <span class="chip c{{ custodian() }}">{{ parentName(custodian()) }}</span>
+    }
     @if (override(); as ov) {
       <span class="hint">⇄ jour échangé</span>
     }

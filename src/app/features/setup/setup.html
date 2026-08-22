@@ -69,6 +69,9 @@
             <option [ngValue]="0">{{ parent0 || 'Vous' }}</option>
             <option [ngValue]="1">{{ parent1 || "L'autre parent" }}</option>
           </select>
+          @if (cycleStartDayLabel(); as day) {
+            <p class="hint">Ce cycle démarre à la passation du {{ day }}.</p>
+          }
         </div>
       }
 
@@ -173,6 +176,14 @@
           <p class="hint">Aucune passation programmée.</p>
         }
         <button type="button" (click)="addHandover()">+ Ajouter une passation</button>
+        @if (cycleStartLabel(); as start) {
+          @if (rotationType !== 'manual' && rotationType !== '223') {
+            <p class="hint">
+              La première passation de la semaine fait basculer la garde : le cycle court de
+              <strong>{{ start }}</strong> au {{ start }} suivant, week-end compris.
+            </p>
+          }
+        }
       </div>
 
       <button class="primary" type="submit" [disabled]="saving() || !store.online()">
