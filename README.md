@@ -3,8 +3,9 @@
 Application web mobile-first utilisée par **exactement deux parents séparés**
 pour gérer le calendrier de garde de leurs enfants : rythme récurrent
 (semaines alternées, 2-2-3 ou manuel), échanges ponctuels de jours,
-événements (médecin, école…) et notes de passation. Les deux parents voient
-et modifient les mêmes données **en temps réel**.
+événements (médecin, école…), passations (jour, heure, qui vient chercher)
+et notes de passation. Les deux parents voient et modifient les mêmes données
+**en temps réel**.
 
 Stack : Angular 22 (standalone, zoneless, signals), CSS custom,
 Supabase (Postgres + Auth magic link + Realtime). Seule dépendance runtime
@@ -112,6 +113,19 @@ ajoutant les périodes au tableau `SCHOOL_HOLIDAYS_FR`. Le partage
 moitié-moitié (option des réglages) attribue la première moitié de chaque
 période au parent configuré les années paires, à l'autre les années
 impaires ; les échanges ponctuels restent prioritaires.
+
+## Passations
+
+Écran Réglages (ou wizard de création) → **Passations** : on y programme, pour
+chaque semaine, le jour et l'heure où l'enfant change de maison, et qui vient
+le chercher — un parent fixe, ou « le parent qui prend la garde » (résolu
+automatiquement, échanges ponctuels et partage des vacances compris). Plusieurs
+passations sont possibles (utile en 2-2-3). Les jours concernés portent un 🚗
+dans la grille ; le détail (« 18:00 — Alice vient chercher Léa ») s'affiche dans
+le panneau du jour.
+
+C'est une information partagée entre les deux parents, pas une règle de calcul :
+la rotation et les échanges restent seuls maîtres de l'attribution des jours.
 
 ## Développement
 

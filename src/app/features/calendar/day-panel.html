@@ -34,6 +34,19 @@
     }
   </div>
 
+  <!-- Passation programmée (réglages) -->
+  @if (handovers().length) {
+    <div class="block">
+      <h3>Passation</h3>
+      @for (handover of handovers(); track $index) {
+        <p class="handover-line">
+          <span class="time">{{ handover.time }}</span>
+          <span>{{ pickupName(handover) }} vient chercher {{ childrenLabel() }}.</span>
+        </p>
+      }
+    </div>
+  }
+
   <!-- Événements -->
   <div class="block">
     <h3>Événements</h3>

@@ -38,3 +38,27 @@ form button[type='submit'] {
   width: 100%;
   margin-top: 0.5rem;
 }
+
+.handover-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.handover-row select:first-child {
+  flex: 1 1 8rem;
+}
+
+.handover-row input[type='time'] {
+  flex: 0 0 6.5rem;
+}
+
+.handover-row select:last-of-type {
+  flex: 1 1 100%;
+}
+
+.handover-row button {
+  flex: 0 0 44px;
+  padding: 0;
+}

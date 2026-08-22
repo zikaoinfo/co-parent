@@ -181,3 +181,8 @@
 .note-mark {
   opacity: 0.7;
 }
+
+.pickup {
+  font-size: 0.6rem;
+  line-height: 1;
+}

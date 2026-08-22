@@ -1,7 +1,15 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { dayLabel, timeLabel } from '../../core/calendar';
-import { Custodian, ParentIndex, custodianFor, holidayCustodian } from '../../core/custody';
+import {
+  Custodian,
+  Handover,
+  ParentIndex,
+  custodianFor,
+  handoverPickup,
+  handoversFor,
+  holidayCustodian,
+} from '../../core/custody';
 import { holidayFor } from '../../core/holidays';
 import { EventRow, FamilyStore } from '../../core/family.store';
 import { ToastService } from '../../core/toast.service';
@@ -59,6 +67,20 @@ export class DayPanel {
     );
   });
 
+  /** Passations programmées ce jour-là (réglages), triées par heure. */
+  protected readonly handovers = computed<Handover[]>(() => {
+    const config = this.store.config();
+    return config ? handoversFor(this.day(), config) : [];
+  });
+
+  /** « Léa », « Léa et Tom », « Léa, Tom et Zoé ». */
+  protected readonly childrenLabel = computed(() => {
+    const names = this.store.config()?.children ?? [];
+    if (names.length === 0) return "l'enfant";
+    if (names.length === 1) return names[0];
+    return `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}`;
+  });
+
   protected readonly events = computed<EventRow[]>(
     () => this.store.eventsByDay()[this.day()] ?? [],
   );
@@ -80,6 +102,14 @@ export class DayPanel {
     const config = this.store.config();
     if (!config || index === -1) return 'Non attribué';
     return config.parents[index];
+  }
+
+  /** Parent qui vient chercher, ou libellé générique si le jour n'est pas attribué. */
+  protected pickupName(handover: Handover): string {
+    const config = this.store.config();
+    if (!config) return 'Le parent qui prend la garde';
+    const who = handoverPickup(handover, this.day(), config, this.store.overrideIndex());
+    return who === -1 ? 'Le parent qui prend la garde' : config.parents[who];
   }
 
   protected authorName(userId: string | null): string | null {
