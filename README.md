@@ -153,6 +153,7 @@ fusion sur `main`. Le script est lancé automatiquement par npm (`postinstall`,
 Le workflow fait donc un `checkout` avec `fetch-depth: 0` — sans l'historique
 complet, le décompte des commits serait faux.
 
+
 ## Développement
 
 ```bash

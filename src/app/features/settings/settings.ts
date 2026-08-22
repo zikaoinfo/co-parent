@@ -9,10 +9,10 @@ import {
   RotationType,
   dateKey,
   isValidTime,
-  isoWeek,
   lastMonday,
   parseKey,
 } from '../../core/custody';
+
 import { HolidayZone } from '../../core/holidays';
 import { BUILD_INFO } from '../../../environments/build-info';
 import { AuthService } from '../../core/auth.service';
@@ -50,6 +50,7 @@ export class SettingsPage {
 
   protected readonly weekdayOptions = WEEKDAY_OPTIONS;
 
+
   /** Version déployée : numéro de build, commit et date (voir scripts/build-info.mjs). */
   protected readonly buildInfo = BUILD_INFO;
 
@@ -59,6 +60,7 @@ export class SettingsPage {
       ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(BUILD_INFO.date))
       : '',
   );
+
 
   protected readonly inviteLink = computed(() => {
     const token = this.store.inviteToken();
