@@ -1,10 +1,25 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { WEEKDAY_INITIALS, monthGrid, monthLabel } from '../../core/calendar';
-import { Custodian, custodianFor, dateKey, handoversFor } from '../../core/custody';
+import {
+  Custodian,
+  CustodyOverrides,
+  FamilyConfig,
+  custodianFor,
+  dateKey,
+  daySplit,
+  handoversFor,
+} from '../../core/custody';
 import { holidayFor } from '../../core/holidays';
 import { FamilyStore } from '../../core/family.store';
 import { DayPanel } from './day-panel';
+
+/** Fond de case par gardien (mêmes valeurs que les classes .day.c* du CSS). */
+const CUSTODIAN_COLOR: Record<Custodian, string> = {
+  0: 'var(--parent0-soft)',
+  1: 'var(--parent1-soft)',
+  '-1': 'var(--card)',
+};
 
 interface DayCell {
   key: string;
@@ -17,6 +32,8 @@ interface DayCell {
   hasNote: boolean;
   handover: boolean; // gardien différent du jour précédent -> trait de passation
   pickupTime: string | null; // heure de la passation programmée dans les réglages
+  /** Dégradé bicolore quand la passation coupe la journée, sinon null (couleur unie par classe). */
+  splitGradient: string | null;
   holiday: boolean; // vacances scolaires (zone de la famille)
 }
 
@@ -61,6 +78,7 @@ export class CalendarPage {
           hasNote: key in notes,
           handover: previous !== null && previous !== custodian,
           pickupTime: handoversFor(key, config)[0]?.time ?? null,
+          splitGradient: this.splitGradient(key, config, overrides),
           holiday: zone ? holidayFor(key, zone) !== null : false,
         };
         previous = custodian;
@@ -68,6 +86,25 @@ export class CalendarPage {
       }),
     );
   });
+
+  /**
+   * Case coupée au prorata de l'heure de passation : la part gauche revient au
+   * gardien du matin, la droite à celui du soir. `null` quand la journée
+   * n'est pas partagée — la couleur unie vient alors de la classe `c{n}`.
+   */
+  private splitGradient(
+    key: string,
+    config: FamilyConfig,
+    overrides: CustodyOverrides,
+  ): string | null {
+    const split = daySplit(key, config, overrides);
+    if (!split || split.atMinutes === 0) return null;
+    const percent = ((split.atMinutes / 1440) * 100).toFixed(2);
+    return (
+      `linear-gradient(to right, ${CUSTODIAN_COLOR[split.before]} 0 ${percent}%, ` +
+      `${CUSTODIAN_COLOR[split.after]} ${percent}% 100%)`
+    );
+  }
 
   /** Des passations sont-elles programmées (pour la légende) ? */
   protected readonly hasHandovers = computed(

@@ -5,10 +5,14 @@ import {
   custodianFor,
   dateKey,
   daysBetween,
+  addDays,
+  cycleHandover,
+  daySplit,
   handoverPickup,
   handoversFor,
   isValidTime,
   isoWeek,
+  minutesOfTime,
   lastMonday,
   parseKey,
   weekdayOf,
@@ -337,5 +341,108 @@ describe('handoversFor / handoverPickup (passations)', () => {
   it('rotation manuelle sans échange : gardien non attribué (-1)', () => {
     const cfg: FamilyConfig = { ...config('manual', ANCHOR, 0), handovers: [vendrediSoir] };
     expect(handoverPickup(vendrediSoir, '2026-01-09', cfg)).toBe(-1);
+  });
+});
+
+describe('addDays / minutesOfTime', () => {
+  it("décale une clé, changements de mois et d'année compris", () => {
+    expect(addDays('2026-01-09', 1)).toBe('2026-01-10');
+    expect(addDays('2026-01-01', -1)).toBe('2025-12-31');
+    expect(addDays('2026-02-28', 1)).toBe('2026-03-01');
+    expect(addDays('2024-02-28', 1)).toBe('2024-02-29');
+  });
+
+  it('convertit HH:MM en minutes depuis minuit', () => {
+    expect(minutesOfTime('00:00')).toBe(0);
+    expect(minutesOfTime('12:00')).toBe(720);
+    expect(minutesOfTime('18:30')).toBe(1110);
+  });
+});
+
+describe('cycleHandover', () => {
+  const vendredi: Handover = { weekday: 5, time: '18:00', pickup: 'custodian' };
+  const mercredi: Handover = { weekday: 3, time: '12:00', pickup: 'custodian' };
+
+  it('retient la première passation de la semaine (jour puis heure)', () => {
+    expect(cycleHandover([vendredi, mercredi])).toEqual(mercredi);
+    const tot: Handover = { weekday: 5, time: '08:00', pickup: 0 };
+    expect(cycleHandover([vendredi, tot])).toEqual(tot);
+  });
+
+  it('null sans passation', () => {
+    expect(cycleHandover(undefined)).toBeNull();
+    expect(cycleHandover([])).toBeNull();
+  });
+});
+
+describe('custodianFor — cycle calé sur la passation', () => {
+  const vendrediSoir: Handover = { weekday: 5, time: '18:00', pickup: 'custodian' };
+
+  it('rotation week : le week-end suit le parent qui prend la garde vendredi', () => {
+    const cfg: FamilyConfig = { ...config('week', ANCHOR, 0), handovers: [vendrediSoir] };
+    // Semaine ancre du lundi 5 janvier 2026 ; passation le vendredi 9.
+    expect(custodianFor('2026-01-08', cfg)).toBe(1); // jeudi : fin du cycle précédent
+    expect(custodianFor('2026-01-09', cfg)).toBe(0); // vendredi : bascule
+    expect(custodianFor('2026-01-10', cfg)).toBe(0); // samedi
+    expect(custodianFor('2026-01-11', cfg)).toBe(0); // dimanche — le week-end reste
+    expect(custodianFor('2026-01-15', cfg)).toBe(0); // jeudi suivant : même cycle
+    expect(custodianFor('2026-01-16', cfg)).toBe(1); // vendredi suivant : bascule
+  });
+
+  it('sans passation, le cycle reste calé sur le lundi (comportement historique)', () => {
+    const cfg = config('week', ANCHOR, 0);
+    expect(custodianFor('2026-01-05', cfg)).toBe(0);
+    expect(custodianFor('2026-01-11', cfg)).toBe(0);
+    expect(custodianFor('2026-01-12', cfg)).toBe(1);
+  });
+
+  it('le 2-2-3 porte ses propres transitions : aucun décalage', () => {
+    const base = config('223', ANCHOR, 0);
+    const avec: FamilyConfig = { ...base, handovers: [vendrediSoir] };
+    for (let i = 0; i < 14; i++) {
+      const key = addDays(ANCHOR, i);
+      expect(custodianFor(key, avec)).toBe(custodianFor(key, base));
+    }
+  });
+});
+
+describe('daySplit (journée partagée par la passation)', () => {
+  const midi: Handover = { weekday: 5, time: '12:00', pickup: 'custodian' };
+  const cfg: FamilyConfig = { ...config('week', ANCHOR, 0), handovers: [midi] };
+
+  it("coupe le jour de bascule à l'heure de la passation", () => {
+    expect(daySplit('2026-01-09', cfg)).toEqual({
+      before: 1,
+      after: 0,
+      atMinutes: 720,
+      time: '12:00',
+    });
+  });
+
+  it('null les jours sans changement de gardien', () => {
+    expect(daySplit('2026-01-10', cfg)).toBeNull();
+    expect(daySplit('2026-01-08', cfg)).toBeNull();
+  });
+
+  it('bascule à minuit (atMinutes 0) quand aucune passation ne couvre ce jour', () => {
+    const sansPassation = config('week', ANCHOR, 0);
+    expect(daySplit('2026-01-12', sansPassation)).toEqual({
+      before: 0,
+      after: 1,
+      atMinutes: 0,
+      time: null,
+    });
+  });
+
+  it("un échange ponctuel crée aussi un partage, à l'heure de la passation", () => {
+    // Vendredi 16 : le cycle donne le parent 1, un échange le rend au parent 0.
+    expect(daySplit('2026-01-16', cfg, { '2026-01-16': 0 })).toBeNull();
+    // Le lendemain redevient parent 1 : la bascule tombe un samedi, sans passation.
+    expect(daySplit('2026-01-17', cfg, { '2026-01-16': 0 })).toEqual({
+      before: 0,
+      after: 1,
+      atMinutes: 0,
+      time: null,
+    });
   });
 });

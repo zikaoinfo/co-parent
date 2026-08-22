@@ -172,3 +172,8 @@
   font-weight: 600;
   font-size: 0.85rem;
 }
+
+.custody .until {
+  font-size: 0.85rem;
+  color: var(--muted);
+}

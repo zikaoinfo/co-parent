@@ -31,6 +31,7 @@
             [class.handover]="cell.handover"
             [class.hol]="cell.holiday"
             [class.selected]="selectedDay() === cell.key"
+            [style.backgroundImage]="cell.splitGradient"
             (click)="select(cell.key)"
           >
             <span class="num">{{ cell.dayNumber }}</span>
@@ -57,7 +58,10 @@
       <p class="holiday-legend">Jours hachurés : vacances scolaires (zone {{ zone }})</p>
     }
     @if (hasHandovers()) {
-      <p class="holiday-legend">🚗 : passation programmée (détail dans le jour)</p>
+      <p class="holiday-legend">
+        🚗 : passation programmée. Une case bicolore est un jour partagé : la part gauche va au
+        parent du matin, la droite à celui de l'après-midi et de la nuit.
+      </p>
     }
 
     @if (selectedDay(); as day) {
